@@ -1,10 +1,19 @@
 # Spelling Buddy
 
-Offline spelling-practice PWA for a P5/P6 pupil preparing for PSLE (Singapore, British spelling).
-Hosted on GitHub Pages from `main`, repo root. No build step, no dependencies.
+Offline spelling-practice PWA for two children in Singapore (British spelling): a P5/P6 pupil preparing
+for PSLE on a phone, and a P3 pupil on a tablet. Hosted on GitHub Pages from `main`, repo root.
+No build step, no dependencies.
+
+## Levels
+- Each device picks a level on first run (`S.level`: `p3` or `p56`), changeable in Words → Settings.
+  There are no profiles: one child per device.
+- `LEVELS` holds each level's word bank, default daily goal and wording. Banks are `RAW_BANK_P3` and `RAW_BANK_P56`.
+- Saved data from before levels existed is treated as `p56`.
+- Copy is child-neutral (no "her"/"his"); child-facing screens address the child as "you".
+- Must work at phone width (~390px) and on tablets in portrait and landscape (layout widens at 700px).
 
 ## Files
-- `index.html` — the whole app: CSS, markup and JS in one file. Word bank is `RAW_BANK` near the top of the script.
+- `index.html` — the whole app: CSS, markup and JS in one file. Word banks are near the top of the script.
 - `sw.js` — service worker. Cache-first, so the app opens with no connection.
 - `manifest.webmanifest`, `icons/` — install metadata and icons.
 - `fonts/` — Fredoka and Nunito (latin subset), bundled so nothing is fetched from the internet.

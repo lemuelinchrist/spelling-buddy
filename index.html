@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Spelling Buddy</title>
-<meta name="description" content="Daily spelling practice for PSLE, with words that come back until they stick.">
+<meta name="description" content="Daily spelling practice for primary school, with words that come back until they stick.">
 <meta name="theme-color" content="#F4F7FB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1623" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -191,10 +191,53 @@ nav.tabs svg.i{width:22px;height:22px}
 .install .timer>span{display:block;height:100%;width:100%;background:var(--orange);transform-origin:left;transform:scaleX(1)}
 .install.counting .timer>span{transform:scaleX(0);transition:transform linear var(--install-ms, 15s)}
 .install.paused .timer>span{transform:scaleX(1);transition:none}
+/* Level picker (first run on a new device) */
+.setup{display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.setup img{width:72px;height:72px;border-radius:18px}
+.levels{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.level{background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.level:hover{border-color:var(--blue)}
+.level b{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.2}
+.level .lv-tag{align-self:flex-start;background:var(--orange-soft);color:var(--orange-ink);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:800;letter-spacing:.04em}
+.level .lv-sub{color:var(--muted);font-size:15px}
+.lists{display:flex;flex-direction:column;gap:10px}
+
+/* Tablet: wider canvas, bigger type, two columns where it helps */
+@media (min-width: 700px){
+  body{font-size:18px}
+  .app{max-width:860px;padding-block:32px 132px}
+  .app.full{max-width:640px}
+  nav.tabs .in{max-width:860px}
+  nav.tabs button{min-height:60px;font-size:14px}
+  h1{font-size:36px}
+  h2{font-size:20px}
+  .note{font-size:16px}
+  .hero{padding:28px}
+  .hero .big{font-size:56px}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #home{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px 24px;align-items:start}
+  #home>.home-head{grid-column:1/-1}
+  .lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+  .levels{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .level .lv-sub{font-size:17px}
+  .level b{font-size:28px}
+  .btn{min-height:58px;font-size:19px}
+  .btn.small{min-height:48px;font-size:16px}
+  .play{width:150px;height:150px}
+  .play svg{width:64px;height:64px}
+  .sentence{font-size:20px;padding:20px 22px}
+  .spell{height:76px;font-size:34px}
+  .lookword{font-size:58px}
+  .correct,.result-ok .word{font-size:44px}
+  .tiles{font-size:28px;gap:6px}
+  .tile{min-width:36px;height:50px}
+  .tip{font-size:18px}
+}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 
 <div class="app" id="app">
+  <section class="screen" id="setup" hidden></section>
   <section class="screen" id="home"></section>
   <section class="screen" id="practice" hidden></section>
   <section class="screen" id="words" hidden></section>
@@ -232,7 +275,7 @@ nav.tabs svg.i{width:22px;height:22px}
    This bank holds answers from past PSLE editing questions plus words P5–P6
    pupils commonly misspell, grouped by the trap they set. British spelling throughout.
    Line format: word|example sentence with _ for the word|memory tip (optional) */
-const RAW_BANK = [
+const RAW_BANK_P56 = [
 {id:"psle", name:"Past PSLE editing answers", lines:`
 immediately|The fire alarm rang and we left the hall _.|immedi-ATE-ly: keep the "ate" in the middle.
 contagious|Chickenpox is _, so Wei Ling had to stay at home.|
@@ -463,18 +506,141 @@ biscuit|Would you like a _ with your tea?|A silent u: bis-cuit.
 build|They will _ a new MRT station here.|
 cousin|My _ lives in Johor Bahru.|`}
 ];
-const BANK = RAW_BANK.map(g => ({
+/* Primary 3–4 bank: everyday words lower-primary pupils often misspell, grouped by the pattern
+   they practise. British spelling. Sentences never contain the answer word elsewhere. */
+const RAW_BANK_P3 = [
+{id:"p3common", name:"Everyday tricky words", lines:`
+because|I stayed at home _ it was raining.|Big Elephants Can Always Understand Small Elephants.
+friend|My best _ sits next to me in class.|Be a friend to the END: fri-END.
+said|Mum _ we could go to the playground.|
+people|There were many _ at the hawker centre.|
+again|Can you say that _, please?|
+answer|Put up your hand to _ the question.|There's a silent w: ans-wer.
+favourite|Mee siam is my _ breakfast.|British spelling has "our".
+colour|What _ is your school bag?|British spelling has "our".
+believe|I _ you can win the race.|Never beLIEve a LIE.
+different|My brother and I like _ games.|
+beautiful|The garden looks _ in the morning.|Big Elephants Are Useful.
+surprise|We planned a _ party for Grandma.|
+enough|Have you had _ to eat?|
+thought|I _ the spelling test was easy.|
+caught|The cat _ a lizard.|
+laugh|The clown made everyone _.|
+early|I woke up _ for school.|
+heard|I _ thunder last night.|There's an EAR in hEARd.
+school|We sing the national anthem at _.|`},
+{id:"p3double", name:"Double letters", lines:`
+rabbit|The _ hopped across the field.|
+happy|The puppy wagged its tail and looked very _.|
+dinner|We had fish soup for _.|
+letter|I wrote a _ to my cousin.|
+butter|Spread some _ on the bread.|
+sudden|There was a _ loud bang.|
+yellow|The school bus is _.|
+pillow|My _ is soft and fluffy.|
+balloon|The red _ floated away.|Two l's and two o's, like two balloons.
+carrot|The rabbit nibbled a _.|
+coffee|Grandpa drinks a cup of _ every morning.|
+middle|Stand in the _ of the line.|
+puzzle|We finished the jigsaw _ together.|
+tomorrow|We have swimming lessons _.|One m, two r's.
+borrow|May I _ your eraser?|
+dollar|This pencil costs one _.|
+kitten|The _ played with a ball of string.|`},
+{id:"p3silent", name:"Silent letters", lines:`
+knee|I scraped my _ at the playground.|Silent k.
+knock|Please _ before you come in.|Silent k.
+knife|Use a _ to cut the apple.|Silent k.
+know|Do you _ the answer?|Silent k.
+write|Please _ your name on the paper.|Silent w.
+wrong|Oops, I took the _ bus.|Silent w.
+wrap|Help me _ the present.|Silent w.
+lamb|The _ followed its mother.|Silent b.
+climb|Monkeys can _ trees.|Silent b.
+comb|_ your hair before school.|Silent b.
+listen|_ carefully to the teacher.|Silent t.
+castle|We built a sand _ at the beach.|Silent t.
+hour|The movie is one _ long.|Silent h.
+half|I ate _ of the sandwich.|Silent l.
+talk|We like to _ during recess.|Silent l.
+island|Sentosa is a small _.|An island IS LAND.
+ghost|The _ story was scary.|Silent h after the g.
+sign|The _ says "No Swimming".|Silent g.`},
+{id:"p3endings", name:"Adding -ed and -ing", lines:`
+stopped|The bus _ at the traffic light.|stop + p + ed: double the p.
+hopping|The frog is _ from rock to rock.|hop + p + ing.
+running|The children were _ in the field.|run + n + ing.
+swimming|I go _ every Saturday.|swim + m + ing.
+sitting|The cat is _ on the mat.|sit + t + ing.
+getting|It is _ dark outside.|get + t + ing.
+shopping|We went _ at the mall.|shop + p + ing.
+clapped|Everyone _ at the end of the show.|clap + p + ed.
+making|Mum is _ fried rice.|make drops its e: making.
+riding|He is _ his bicycle.|ride drops its e: riding.
+smiling|The baby is _ at me.|smile drops its e: smiling.
+baked|Grandma _ a chocolate cake.|bake + d.
+hoped|I _ it would not rain.|hope + d.
+cried|The baby _ all night.|cry: the y becomes i.
+tried|I _ my best in the test.|try: the y becomes i.
+hurried|We _ to catch the bus.|hurry: the y becomes i.
+playing|We are _ hide-and-seek.|Keep the y: play + ing.`},
+{id:"p3plurals", name:"Plurals", lines:`
+boxes|We packed the toys into _.|Add -es after x.
+buses|Many _ pass by our school.|Add -es after s.
+dishes|I helped to wash the _.|Add -es after sh.
+watches|The shop sells _ and clocks.|Add -es after ch.
+babies|The _ are sleeping.|baby: the y becomes i, then add -es.
+stories|Dad reads us _ at bedtime.|story: the y becomes i, then add -es.
+families|Many _ came for Sports Day.|family: the y becomes i, then add -es.
+leaves|The _ are falling from the tree.|One leaf, many leaves.
+knives|Be careful with the _.|One knife, many knives.
+wolves|The _ howled at the moon.|One wolf, many wolves.
+tomatoes|Mum bought some _ at the market.|tomato + es.
+potatoes|We had mashed _ for dinner.|potato + es.
+children|The _ played in the park.|One child, many children.
+mice|Two _ ran across the floor.|One mouse, two mice.
+teeth|Brush your _ twice a day.|One tooth, many teeth.
+feet|My _ are tired after the walk.|One foot, two feet.
+women|The _ were chatting at the void deck.|One woman, two women.`},
+{id:"p3dates", name:"Days, months and numbers", lines:`
+Wednesday|We have art on _.|Wed-NES-day.
+Thursday|My piano lesson is on _.|
+Saturday|We visit Grandma every _.|
+January|The new school year starts in _.|
+February|My birthday is in _.|Feb-RU-ary: don't forget the first r.
+August|National Day is in _.|
+December|Christmas is in _.|
+forty|There are _ chairs in the hall.|four has a u, but forty does not.
+eighty|Great-grandma is _ years old.|eight + y.
+ninety|The book has _ pages.|nine keeps its e: ninety.
+twelve|There are _ months in a year.|
+hundred|I can count to one _.|
+thousand|A _ people came to the concert.|
+second|I came in _ in the race.|`}
+];
+const parseBank = raw => raw.map(g => ({
   id: g.id, name: g.name, builtin: true,
   words: g.lines.trim().split("\n").map(l => { const [w, s = "", t = ""] = l.split("|"); return { w: w.trim(), s: s.trim(), t: t.trim() }; })
 }));
+const LEVELS = {
+  p3:  { short: "P3–4", name: "Primary 3 and 4", sub: "Everyday tricky words, double and silent letters, adding -ed and -ing, plurals, days and numbers.",
+         bankTitle: "Primary 3–4 word bank", goal: 5, bank: parseBank(RAW_BANK_P3),
+         intro: "Words Primary 3 and 4 pupils often get wrong, grouped by spelling pattern. Lists added above are practised first." },
+  p56: { short: "P5–6", name: "Primary 5 and 6", sub: "PSLE editing traps: ie or ei, -able or -ible, -tion or -sion, silent letters and more.",
+         bankTitle: "PSLE word bank", goal: 10, bank: parseBank(RAW_BANK_P56),
+         intro: "PSLE has no official spelling list. Spelling is tested in Paper 2 Editing, so these are words from past PSLE editing answers and words P5–P6 pupils often misspell, grouped by the trap they set." }
+};
+const level = () => LEVELS[S.level] || LEVELS.p56;
+const bank = () => level().bank;
 
 /* ---------- Storage ---------- */
 const KEY = "spellbuddy.v1";
 const INTERVALS = [1, 1, 3, 7, 14, 30]; // days until next review, by box
 const MASTERED_BOX = 4;
-function freshState(){ return { v:1, goal:10, mode:"listen", voice:"", off:{}, custom:[], cards:{}, log:{} }; }
+function freshState(){ return { v:1, level:"", goal:10, mode:"listen", voice:"", off:{}, custom:[], cards:{}, log:{} }; }
 let S = freshState();
-try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(freshState(), JSON.parse(raw)); } catch(e) {}
+// Saved data from before levels existed belongs to the P5–6 user, so it keeps that level.
+try { const raw = localStorage.getItem(KEY); if (raw) { S = Object.assign(freshState(), JSON.parse(raw)); if (!LEVELS[S.level]) S.level = "p56"; } } catch(e) {}
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 
 /* ---------- Helpers ---------- */
@@ -497,7 +663,7 @@ const ICON = {
 function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
 
 /* ---------- Word lists ---------- */
-function allLists(){ return [...S.custom.map(c => ({...c, builtin:false})), ...BANK]; }
+function allLists(){ return [...S.custom.map(c => ({...c, builtin:false})), ...bank()]; }
 function isOn(list){ return list.builtin ? !S.off[list.id] : list.on !== false; }
 function activeWords(){
   const seen = new Set(), out = [];
@@ -588,17 +754,33 @@ function record(item, result){ // result: right | help | wrong
 }
 
 /* ---------- Navigation ---------- */
-const screens = ["home","practice","words","progress"];
+const screens = ["setup","home","practice","words","progress"];
 function show(name){
   screens.forEach(s => $("#"+s).hidden = s !== name);
-  const inPractice = name === "practice";
+  const inPractice = name === "practice" || name === "setup";
   $("#tabs").hidden = inPractice; $("#app").classList.toggle("full", inPractice);
   document.querySelectorAll("#tabs button").forEach(b => { if (b.dataset.go === name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   if (reloadWhenIdle && name !== "practice") { location.reload(); return; }
-  ({home:renderHome, words:renderWords, progress:renderProgress})[name]?.();
+  ({setup:renderSetup, home:renderHome, words:renderWords, progress:renderProgress})[name]?.();
   window.scrollTo(0,0);
 }
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; b.dataset.go === "start" ? startSession() : show(b.dataset.go); });
+
+/* ---------- Level picker (first run on a new device) ---------- */
+function renderSetup(){
+  $("#setup").innerHTML = `<div class="setup">
+    <img src="icons/icon-192.png" alt="">
+    <div class="screen" style="gap:6px"><h1>Who's practising on this device?</h1>
+      <p class="muted" style="margin:0">Pick a level to choose the starting words. You can change it later in Words, under Settings.</p></div>
+    <div class="levels">${Object.entries(LEVELS).map(([id, L]) => `
+      <button class="level" type="button" data-level="${id}"><span class="lv-tag">${L.short}</span><b>${L.name}</b><span class="lv-sub">${L.sub}</span></button>`).join("")}
+    </div></div>`;
+  document.querySelectorAll("[data-level]").forEach(b => b.onclick = () => {
+    S.level = b.dataset.level;
+    if (!Object.keys(S.cards).length) S.goal = LEVELS[S.level].goal;
+    save(); show("home");
+  });
+}
 
 /* ---------- Home ---------- */
 function renderHome(){
@@ -625,13 +807,13 @@ function renderHome(){
       <button class="btn block" type="button" id="more">Practise 5 more</button>
     </div>`;
   $("#home").innerHTML = `
-    <div class="row between">
+    <div class="row between home-head">
       <div><div class="muted" style="font-weight:600;font-size:15px">${esc(dateStr)}</div><h1>Spelling Buddy</h1></div>
       <span class="pill streak">${ICON.flame}<span>${st} day${st===1?"":"s"}</span></span>
     </div>
     ${hero}
-    <div class="card"><h2>This week</h2><div class="week">${days}</div></div>
-    ${tricky.length ? `<div class="screen" style="gap:10px"><h2>Tricky words to beat</h2><div class="chips">${tricky.map(([key]) => `<span class="wchip">${esc(wordName(key))}</span>`).join("")}</div></div>` : `<p class="note">Words she finds hard will show up here so you can see what to focus on.</p>`}`;
+    <div class="screen home-side"><div class="card"><h2>This week</h2><div class="week">${days}</div></div>
+    ${tricky.length ? `<div class="screen" style="gap:10px"><h2>Tricky words to beat</h2><div class="chips">${tricky.map(([key]) => `<span class="wchip">${esc(wordName(key))}</span>`).join("")}</div></div>` : `<p class="note" style="margin:0">Words that trip you up will show up here, so you know what to work on.</p>`}</div>`;
   $("#go")?.addEventListener("click", () => startSession());
   $("#more")?.addEventListener("click", () => startSession(5));
 }
@@ -756,7 +938,8 @@ function tipCard(t){ return `<div class="tip">${ICON.bulb}<div><div style="font-
 function check(){
   const c = P.cur, it = c.it, input = $("#spell-input"), ans = input.value.trim();
   if (!ans) { input.classList.remove("shake"); void input.offsetWidth; input.classList.add("shake"); return; }
-  const ok = ans.toLowerCase() === it.w.toLowerCase();
+  const norm = x => x.trim().replace(/\s+/g, " ").toLowerCase();
+  const ok = norm(ans) === norm(it.w);
   if (c.phase === "rewrite") {
     if (ok) { c.phase = "fixed"; renderPractice(); }
     else { c.attempt = ans; c.phase = "wrong"; renderPractice(); toast("Not yet. Look at it once more."); }
@@ -798,7 +981,7 @@ function listCard(l){
       <label class="toggle"><input type="checkbox" data-toggle="${esc(id)}" ${on ? "checked" : ""}> Include in daily practice</label>
       <div>${l.words.map(w => { const [s, cls] = statusOf(w.w); return `<div class="wordrow"><span>${esc(w.w)}</span><span class="status ${cls}">${s}</span></div>`; }).join("")}</div>
       ${!l.builtin ? (pendingDelete === l.id
-        ? `<div class="confirm" role="alert"><span>Delete “${esc(l.name)}”? Her progress on these words is kept.</span><div class="row"><button class="btn small primary" type="button" data-del-yes="${esc(l.id)}">Delete list</button><button class="btn small ghost" type="button" data-del-no>Keep it</button></div></div>`
+        ? `<div class="confirm" role="alert"><span>Delete “${esc(l.name)}”? Progress on these words is kept.</span><div class="row"><button class="btn small primary" type="button" data-del-yes="${esc(l.id)}">Delete list</button><button class="btn small ghost" type="button" data-del-no>Keep it</button></div></div>`
         : `<button class="btn small ghost" type="button" data-del="${esc(l.id)}" style="align-self:flex-start">Delete list</button>`) : ""}
     </div></details>`;
 }
@@ -809,18 +992,20 @@ function renderWords(){
   $("#words").innerHTML = `
     <div class="row between"><h1 style="font-size:28px">Word lists</h1><span class="pill" style="background:var(--surface-2);color:var(--muted)">For parents</span></div>
     <form class="card" id="addlist" autocomplete="off">
-      <h2>Add her school spelling list</h2>
+      <h2>Add a school spelling list</h2>
       <div class="field"><label for="list-name">List name</label><input id="list-name" class="txt" type="text" placeholder="e.g. Term 4 Week 3" value="${esc(draftName)}"></div>
       <div class="field"><label for="list-words">Words, one per line</label>
         <textarea id="list-words" placeholder="necessary&#10;rhythm | We clapped to the rhythm of the drums.">${esc(draftWords)}</textarea>
-        <span class="note">Optional: add a sentence after a “|” so she can hear the word in context.</span></div>
+        <span class="note">Optional: add a sentence after a “|” so the word can be heard in a sentence. Phrases work too.</span></div>
       <button class="btn primary block" type="submit">Save list</button>
     </form>
-    ${S.custom.length ? `<div class="screen" style="gap:10px"><h2>Her lists</h2>${S.custom.map(c => listCard({...c, builtin:false})).join("")}</div>` : ""}
-    <div class="screen" style="gap:10px"><h2>PSLE word bank</h2>
-      <p class="note" style="margin:0">PSLE has no official spelling list. Spelling is tested in Paper 2 Editing, so these are words from past PSLE editing answers and words P5–P6 pupils often misspell, grouped by the trap they set.</p>
-      ${BANK.map(listCard).join("")}</div>
+    ${S.custom.length ? `<div class="screen" style="gap:10px"><h2>School lists</h2><div class="lists">${S.custom.map(c => listCard({...c, builtin:false})).join("")}</div></div>` : ""}
+    <div class="screen" style="gap:10px"><h2>${level().bankTitle}</h2>
+      <p class="note" style="margin:0">${level().intro}</p>
+      <div class="lists">${bank().map(listCard).join("")}</div></div>
     <div class="card"><h2>Settings</h2>
+      <div class="field"><label for="level">Level</label><select id="level">${Object.entries(LEVELS).map(([id, L]) => `<option value="${id}" ${S.level===id?"selected":""}>${L.name}</option>`).join("")}</select>
+        <span class="note">Changes the built-in word bank. School lists and progress stay.</span></div>
       <div class="field"><label for="goal">Words per day</label><select id="goal">${[5,10,15,20].map(n => `<option ${S.goal===n?"selected":""}>${n}</option>`).join("")}</select></div>
       <div class="field"><label for="mode">How words are shown</label><select id="mode">
         <option value="listen" ${S.mode==="listen"?"selected":""}>Listen and spell (like a spelling test)</option>
@@ -828,7 +1013,7 @@ function renderWords(){
         ${canSpeak ? "" : `<span class="note">This device can't read words aloud, so the app uses Look, cover, write, check.</span>`}</div>
       ${canSpeak ? `<div class="field"><label for="voice">Voice</label><select id="voice"><option value="">Automatic (British English if available)</option>${voiceOpts}</select>
         <button class="btn small ghost" type="button" id="testvoice" style="align-self:flex-start">${ICON.speaker} Test voice</button></div>` : ""}
-      ${confirmReset ? `<div class="confirm" role="alert"><span>Erase all progress, streaks and her lists? This can't be undone.</span><div class="row wrap"><button class="btn small primary" type="button" id="reset-yes">Erase everything</button><button class="btn small ghost" type="button" id="reset-no">Cancel</button></div></div>`
+      ${confirmReset ? `<div class="confirm" role="alert"><span>Erase all progress, streaks and school lists? This can't be undone.</span><div class="row wrap"><button class="btn small primary" type="button" id="reset-yes">Erase everything</button><button class="btn small ghost" type="button" id="reset-no">Cancel</button></div></div>`
         : `<button class="btn small ghost" type="button" id="reset" style="align-self:flex-start">Reset all progress</button>`}
       <p class="note" style="margin:0">Progress is saved on this device only.</p>
     </div>
@@ -857,20 +1042,21 @@ function renderWords(){
   document.querySelectorAll("[data-del-no]").forEach(b => b.onclick = () => { pendingDelete = null; renderWords(); });
   document.querySelectorAll("[data-del-yes]").forEach(b => b.onclick = () => { S.custom = S.custom.filter(c => c.id !== b.dataset.delYes); pendingDelete = null; save(); renderWords(); toast("List deleted."); });
   $("#goal").onchange = e => { S.goal = +e.target.value; save(); };
+  $("#level").onchange = e => { S.level = e.target.value; save(); renderWords(); toast(`Now using the ${level().name} words.`); };
   $("#mode").onchange = e => { S.mode = e.target.value; save(); };
   $("#voice") && ($("#voice").onchange = e => { S.voice = e.target.value; save(); say("necessary"); });
   $("#testvoice") && ($("#testvoice").onclick = () => say("It is necessary to wear a helmet when you cycle."));
   $("#reset") && ($("#reset").onclick = () => { confirmReset = true; renderWords(); });
   $("#reset-no") && ($("#reset-no").onclick = () => { confirmReset = false; renderWords(); });
-  $("#reset-yes") && ($("#reset-yes").onclick = () => { S = freshState(); save(); confirmReset = false; renderWords(); toast("Progress erased."); });
+  $("#reset-yes") && ($("#reset-yes").onclick = () => { S = Object.assign(freshState(), { level: S.level, goal: level().goal }); save(); confirmReset = false; renderWords(); toast("Progress erased."); });
   wireBackup();
 }
 
 /* ---------- Backup: move progress between devices ----------
    The code is the whole saved state, JSON → base64, with a prefix.
-   Restoring MERGES into this device, so nothing she did here is lost:
+   Restoring MERGES into this device, so nothing done here is lost:
    for each word the record with more attempts wins, for each day the bigger log wins,
-   and her own lists are combined. */
+   and school lists are combined. */
 const BACKUP_PREFIX = "SPELLBUDDY1:";
 let bkDraft = "", bkShown = false;
 function backupCode(){
@@ -899,7 +1085,8 @@ function mergeBackup(data){
   const have = new Set(S.custom.map(c => c.id));
   for (const c of (data.custom || [])) if (c && c.id && !have.has(c.id)) S.custom.push(c);
   for (const id of Object.keys(data.off || {})) S.off[id] = true;
-  if (freshDevice) { // a brand-new install takes over her settings too
+  if (freshDevice) { // a brand-new install takes over the settings too
+    if (LEVELS[data.level]) S.level = data.level;
     if ([5,10,15,20].includes(data.goal)) S.goal = data.goal;
     if (data.mode === "listen" || data.mode === "look") S.mode = data.mode;
   }
@@ -908,7 +1095,7 @@ function mergeBackup(data){
 }
 function backupCard(){
   return `<div class="card" id="backup"><h2>Move progress to another device</h2>
-    <p class="note" style="margin:0">Copy the backup code on this device, then paste it into Spelling Buddy on the other one. It carries her streak, word progress and her own lists.</p>
+    <p class="note" style="margin:0">Copy the backup code on this device, then paste it into Spelling Buddy on the other one. It carries the streak, word progress and school lists.</p>
     <button class="btn small ghost" type="button" id="bk-copy" style="align-self:flex-start">Copy backup code</button>
     <div class="field" ${bkShown ? "" : "hidden"} id="bk-out-wrap"><label for="bk-out">Backup code</label>
       <textarea id="bk-out" readonly style="min-height:80px;font-size:13px;word-break:break-all"></textarea>
@@ -925,7 +1112,7 @@ function wireBackup(){
   $("#bk-copy").onclick = () => {
     const code = backupCode();
     bkShown = true; $("#bk-out-wrap").hidden = false; out.value = code;
-    const fallback = () => { out.focus(); out.select(); toast("Code selected. Copy it to move her progress."); };
+    const fallback = () => { out.focus(); out.select(); toast("Code selected. Copy it to move the progress."); };
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => toast("Backup code copied."), fallback);
       else fallback();
@@ -973,11 +1160,11 @@ function renderProgress(){
       <div class="row between"><h2>Right first time</h2><span class="note">last 6 weeks</span></div>
       ${hasData ? `<div class="chart" role="img" aria-label="Share of words spelt right on the first try each week: ${weeks.map(w => `${w.label} ${w.pct ?? "no practice"}${w.pct!==null?"%":""}`).join(", ")}">
         ${weeks.map(w => `<div class="col ${w.now?"now":""}"><span class="v">${w.pct===null ? "–" : w.pct+"%"}</span><div class="b" style="height:${w.pct===null ? 0 : Math.max(4, w.pct)}%"></div><span class="l">${esc(w.label)}</span></div>`).join("")}
-      </div>` : `<p class="note" style="margin:0">After her first round, this chart shows how often she spells words right on the first try each week.</p>`}
+      </div>` : `<p class="note" style="margin:0">After the first round, this chart shows how often words are spelt right on the first try each week.</p>`}
     </div>
     <div class="screen" style="gap:10px"><h2>Mistake patterns</h2>
       ${patterns.length ? `<div class="card" style="gap:0">${patterns.map(([g, v]) => `<div class="prow"><div style="min-width:0"><div style="font-weight:800">${esc(g)}</div><div class="note">${v.words.sort((a,b)=>b[1]-a[1]).slice(0,3).map(([key]) => esc(names[key] || key)).join(", ")}</div></div><span style="font-weight:800;color:var(--orange-ink);font-variant-numeric:tabular-nums">${v.n}×</span></div>`).join("")}</div>`
-        : `<p class="note" style="margin:0">Once she misses a few words, this shows which kinds of spelling trip her up (double letters, silent letters and so on).</p>`}
+        : `<p class="note" style="margin:0">After a few missed words, this shows which kinds of spelling cause the most trouble (double letters, silent letters and so on).</p>`}
     </div>`;
 }
 
@@ -1022,7 +1209,7 @@ $("#install-go").onclick = () => {
   deferredInstall.prompt();
   deferredInstall.userChoice.finally(() => { deferredInstall = null; hideInstall(false); });
 };
-// Hold the banner while she's touching or reading it; restart the countdown when she lets go.
+// Hold the banner while it's being touched or read; restart the countdown on release.
 $("#install").addEventListener("pointerenter", () => { clearTimeout(installTimer); $("#install").classList.add("paused"); });
 $("#install").addEventListener("pointerdown", () => { clearTimeout(installTimer); $("#install").classList.add("paused"); });
 $("#install").addEventListener("pointerleave", () => { if ($("#install").classList.contains("show")) startInstallTimer(); });
@@ -1046,7 +1233,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-show("home");
+show(S.level ? "home" : "setup");
 </script>
 
 </body>

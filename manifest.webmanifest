@@ -1,12 +1,11 @@
 {
   "name": "Spelling Buddy",
   "short_name": "Spelling",
-  "description": "Daily spelling practice for PSLE, with words that come back until they stick.",
+  "description": "Daily spelling practice for primary school, with words that come back until they stick.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#F4F7FB",
   "theme_color": "#F4F7FB",
   "lang": "en-GB",
