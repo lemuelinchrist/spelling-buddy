@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Spelling Buddy</title>
+<meta name="description" content="Daily spelling practice for PSLE, with words that come back until they stick.">
+<meta name="theme-color" content="#F4F7FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1623" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spelling Buddy">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>
+@font-face{font-family:"Fredoka";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/fredoka-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Fredoka";font-style:normal;font-weight:600;font-display:swap;src:url("fonts/fredoka-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Nunito";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/nunito-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Nunito";font-style:normal;font-weight:600;font-display:swap;src:url("fonts/nunito-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Nunito";font-style:normal;font-weight:700;font-display:swap;src:url("fonts/nunito-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Nunito";font-style:normal;font-weight:800;font-display:swap;src:url("fonts/nunito-latin-800-normal.woff2") format("woff2")}
+</style>
+</head>
+<body>
+<style>
+/* Layout: one phone-width column, four screens swapped in place, bottom tab bar; practice runs full-screen */
+:root{
+  --bg:#F4F7FB; --surface:#FFFFFF; --surface-2:#EEF2FA; --line:#D5DCE6;
+  --fg:#1B2A41; --muted:#4B5768;
+  --blue:#1D4ED8; --blue-soft:#E6EDFC;
+  --orange:#C2410C; --orange-ink:#9A3412; --orange-soft:#FFF1E6;
+  --on-accent:#FFFFFF; --shadow:rgba(27,42,65,.08);
+  --display:"Fredoka", ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body:"Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1623; --surface:#182131; --surface-2:#1F2A3D; --line:#2E3B52;
+  --fg:#E8EDF5; --muted:#A3AEC0;
+  --blue:#8CB0FF; --blue-soft:#1C2A4A;
+  --orange:#F08A4B; --orange-ink:#FFB98A; --orange-soft:#3A2416;
+  --on-accent:#10151F; --shadow:rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1623; --surface:#182131; --surface-2:#1F2A3D; --line:#2E3B52;
+  --fg:#E8EDF5; --muted:#A3AEC0;
+  --blue:#8CB0FF; --blue-soft:#1C2A4A;
+  --orange:#F08A4B; --orange-ink:#FFB98A; --orange-soft:#3A2416;
+  --on-accent:#10151F; --shadow:rgba(0,0,0,.35); color-scheme:dark}
+
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;padding-block:20px 112px}
+.app.full{padding-bottom:28px}
+.screen{display:flex;flex-direction:column;gap:18px}
+h1,h2{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:30px} h2{font-size:18px;font-family:var(--body);font-weight:800}
+.muted{color:var(--muted)}
+.eyebrow{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.card{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px}
+.pill.streak{background:var(--orange-soft);color:var(--orange-ink)}
+.btn{min-height:52px;border-radius:16px;border:none;padding:0 18px;font-weight:800;font-size:17px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.primary{background:var(--orange);color:var(--on-accent)}
+.btn.blue{background:var(--blue);color:var(--on-accent)}
+.btn.ghost{background:var(--surface);border:1.5px solid var(--line);font-weight:700}
+.btn.text{background:transparent;color:var(--muted);font-weight:700}
+.btn.small{min-height:44px;font-size:15px;border-radius:999px;padding:0 14px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* Home */
+.hero{background:var(--orange);color:var(--on-accent);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.hero .big{font-family:var(--display);font-size:42px;font-weight:600;line-height:1}
+.hero .chip{background:color-mix(in srgb, var(--on-accent) 18%, transparent);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700}
+.hero .btn{background:var(--surface);color:var(--fg)}
+.hero.done{background:var(--blue)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+.week div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.dot{width:32px;height:32px;border-radius:50%;background:var(--surface-2)}
+.dot.on{background:var(--blue)}
+.dot.today{border:2px dashed var(--orange);background:transparent}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.wchip{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:700}
+
+/* Practice */
+.topbar{display:flex;align-items:center;gap:14px}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--surface);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.bar{flex:1;height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--orange);border-radius:999px;transition:width .3s}
+.speak{display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:8px}
+.play{width:124px;height:124px;border-radius:50%;border:none;background:var(--blue);color:var(--on-accent);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 24px color-mix(in srgb, var(--blue) 30%, transparent)}
+.play svg{width:54px;height:54px}
+.play:active{transform:scale(.96)}
+.sentence{background:var(--surface);border-radius:18px;padding:16px 18px;font-size:17px}
+.blank{display:inline-block;min-width:88px;border-bottom:2.5px solid var(--fg);vertical-align:baseline;height:1em}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-weight:800;font-size:15px}
+.spell{height:64px;border-radius:16px;border:2.5px solid var(--line);background:var(--surface);padding:0 18px;font-family:var(--display);font-size:28px;letter-spacing:.05em;width:100%}
+.spell:focus{border-color:var(--blue);outline:none}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.hint{font-weight:700;color:var(--orange-ink)}
+.lookword{font-family:var(--display);font-size:44px;font-weight:600;text-align:center;letter-spacing:.04em;color:var(--blue);padding:18px 0}
+.result-ok{background:var(--blue-soft);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.result-ok .word{font-family:var(--display);font-size:34px;font-weight:600;color:var(--blue)}
+.tiles{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--display);font-size:22px;font-weight:500}
+.tile{min-width:28px;height:40px;padding:0 4px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center}
+.tile.bad{background:var(--orange-soft);color:var(--orange-ink);outline:2px solid var(--orange)}
+.tile.extra{background:var(--orange-soft);color:var(--orange-ink);text-decoration:line-through;text-decoration-thickness:2.5px;outline:2px solid var(--orange)}
+.tile.missing{background:transparent;outline:2px dashed var(--orange);color:var(--orange-ink);font-size:16px}
+.correct{font-family:var(--display);font-size:34px;font-weight:600;letter-spacing:.04em;color:var(--blue);word-break:break-word}
+.correct u{text-decoration-thickness:3px;text-underline-offset:6px}
+.tip{background:var(--surface-2);border-radius:20px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.tip svg{width:26px;height:26px;stroke:var(--blue)}
+.grow{flex:1}
+
+/* Lists & settings */
+details.list{background:var(--surface);border-radius:18px}
+details.list>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+details.list>summary::-webkit-details-marker{display:none}
+.lname{font-weight:800}
+.lcount{color:var(--muted);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.meter{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.meter>span{display:block;height:100%;background:var(--blue);border-radius:999px}
+.lbody{padding:0 16px 14px;display:flex;flex-direction:column;gap:10px}
+.wordrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--surface-2)}
+.wordrow span:first-child{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.status{font-size:13px;font-weight:800;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.s-new{background:var(--surface-2);color:var(--muted)}
+.s-learning{background:var(--surface-2);color:var(--fg)}
+.s-tricky{background:var(--orange-soft);color:var(--orange-ink)}
+.s-mastered{background:var(--blue-soft);color:var(--blue)}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;min-height:44px;cursor:pointer}
+.toggle input{width:22px;height:22px;accent-color:var(--blue)}
+textarea,.txt,select{border-radius:14px;border:2px solid var(--line);background:var(--surface);padding:10px 14px;width:100%}
+textarea{resize:vertical;min-height:110px;font-size:16px}
+.txt,select{min-height:48px}
+.confirm{background:var(--orange-soft);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.note{font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom, 0px));background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:20;max-width:90%}
+
+/* Progress */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--display);font-size:34px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.chart{display:flex;align-items:flex-end;gap:10px;height:150px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.chart .b{width:100%;background:color-mix(in srgb, var(--blue) 35%, var(--surface-2));border-radius:8px;min-height:4px}
+.chart .col.now .b{background:var(--blue)}
+.chart .v{font-size:13px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.chart .col.now .v{color:var(--blue)}
+.chart .l{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--surface-2)}
+.prow:first-child{border-top:none;padding-top:0}
+
+/* Nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:10;
+  padding:6px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}
+nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+nav.tabs button{min-height:54px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:12px}
+nav.tabs button[aria-current="page"]{color:var(--orange);font-weight:800}
+nav.tabs svg.i{width:22px;height:22px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app">
+  <section class="screen" id="home"></section>
+  <section class="screen" id="practice" hidden></section>
+  <section class="screen" id="words" hidden></section>
+  <section class="screen" id="progress" hidden></section>
+</div>
+
+<nav class="tabs" id="tabs" aria-label="Main">
+  <div class="in">
+    <button type="button" data-go="home" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Home</button>
+    <button type="button" data-go="start"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Practise</button>
+    <button type="button" data-go="words"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 10h6M9 14h6"/></svg>Words</button>
+    <button type="button" data-go="progress"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Progress</button>
+  </div>
+</nav>
+
+<script>
+/* ---------- Word bank ----------
+   PSLE has no official spelling list; spelling is tested in Paper 2 Editing.
+   This bank holds answers from past PSLE editing questions plus words P5–P6
+   pupils commonly misspell, grouped by the trap they set. British spelling throughout.
+   Line format: word|example sentence with _ for the word|memory tip (optional) */
+const RAW_BANK = [
+{id:"psle", name:"Past PSLE editing answers", lines:`
+immediately|The fire alarm rang and we left the hall _.|immedi-ATE-ly: keep the "ate" in the middle.
+contagious|Chickenpox is _, so Wei Ling had to stay at home.|
+fluid|The nurse told him to drink plenty of _.|
+scratching|The puppy kept _ at the door to be let in.|Scratch keeps its "t" before "ch".
+recuperate|After the operation, Grandpa needed a week to _.|
+lethargic|The heat made everyone feel _ and sleepy.|`},
+{id:"double", name:"Double letters", lines:`
+necessary|It is _ to wear a helmet when you cycle.|A shirt has one Collar and two Sleeves.
+unnecessary|Bringing three umbrellas was _.|un + necessary: the double "n" comes from adding "un".
+embarrass|Please do not _ me in front of my friends.|Two r's and two s's: you go Really Red and Smile Shyly.
+accommodate|The hall can _ five hundred pupils.|It is big enough to hold two c's and two m's.
+occasion|The school concert was a special _.|Two c's, one s.
+address|Write your _ clearly on the envelope.|
+tomorrow|The test is _, so I will revise tonight.|One m, two r's.
+disappear|The magician made the rabbit _.|dis + appear: one s, two p's.
+disappoint|I did not want to _ my coach.|dis + appoint: one s, two p's.
+possession|The wallet was found in his _.|Two pairs of s's.
+recommend|Can you _ a good book to read?|One c, two m's.
+committee|The class _ planned the party.|Double m, double t, double e.
+millionaire|The _ gave money to the hospital.|Two l's, but only one n.
+success|Our charity sale was a great _.|Two c's, two s's.
+successful|The rescue mission was _.|success + ful: "full" drops an l.
+beginning|At the _ of the year, we set our goals.|Double the n before "ing".
+occurred|The accident _ near the junction.|Two c's and two r's.
+travelled|We _ to Malacca by coach.|British spelling doubles the l.
+cancelled|The match was _ because of the rain.|British spelling doubles the l.
+opportunity|This trip is a great _ to learn.|Two p's after the o.
+aggressive|The _ dog barked at everyone.|Two g's, two s's.
+exaggerate|Don't _; it was only a small spider!|Two g's, one r.
+collapse|The old bridge might _ in a storm.|
+commotion|There was a _ when the snake appeared.|
+appreciate|I _ your help with my project.|
+assistance|The old lady needed _ with her bags.|
+accident|It was an _, so please don't be angry.|
+accurate|Make sure your measurements are _.|
+approach|We watched the storm clouds _ the island.|
+suggestion|Do you have a _ for the class outing?|
+harass|It is wrong to _ stray animals.|Only one r, but two s's.
+apparently|_, the shop has closed for good.|Two p's, then "rent": app-a-rent-ly.
+occurrence|Lightning is a common _ here.|Double c, double r.`},
+{id:"silent", name:"Silent letters", lines:`
+rhythm|We clapped to the _ of the drums.|Rhythm Helps Your Two Hips Move.
+conscience|My _ told me to return the money.|con + science.
+conscious|He was _ that everyone was watching.|There's a hidden "sc".
+knowledge|Reading widens your _.|know + ledge.
+knuckle|She grazed her _ on the wall.|
+wrinkle|Iron the shirt to remove every _.|
+wrestle|The boys like to _ on the grass.|
+scissors|Pass me the _ to cut the paper.|A silent c, and two s's at the end.
+muscle|He pulled a _ while running.|Silent c after the s.
+guarantee|The watch comes with a two-year _.|A silent u after the g.
+guardian|Please get your form signed by a parent or _.|
+honest|Thank you for being _ with me.|Silent h.
+honour|It is an _ to lead the school band.|Silent h, and British "our".
+island|Sentosa is a small _ off Singapore.|An island IS LAND.
+thumb|I hurt my _ playing volleyball.|Silent b.
+plumber|The _ fixed the leaking pipe.|Silent b.
+solemn|The ceremony was quiet and _.|Silent n at the end.
+column|Write your answers in the second _.|Silent n at the end.
+autumn|Leaves fall from the trees in _.|Silent n at the end.
+doubt|I have no _ that she will win.|Silent b.
+debt|He worked hard to pay off his _.|Silent b.
+receipt|Keep the _ in case you need to return it.|Silent p.
+foreign|She speaks two _ languages.|
+whistle|The referee blew the _.|Silent t.
+glisten|Dew drops _ in the morning sun.|Silent t.
+design|We had to _ a poster for Racial Harmony Day.|Silent g.
+campaign|The school started a _ to save water.|`},
+{id:"ie", name:"ie or ei", lines:`
+receive|Did you _ my message?|i before e, except after c.
+believe|I _ you can do it.|Never beLIEve a LIE.
+ceiling|A gecko was crawling on the _.|After c, it's ei.
+deceive|The fox tried to _ the crow.|After c, it's ei.
+conceited|He was so _ that nobody liked him.|After c, it's ei.
+achieve|Work hard and you will _ your goals.|
+thief|The _ ran off with her handbag.|
+fierce|The _ tiger paced in its cage.|
+niece|My aunt brought her _ to the party.|
+piece|May I have a _ of cake?|A PIEce of PIE.
+shriek|We heard a loud _ from the kitchen.|
+siege|The castle was under _ for weeks.|
+grief|The family was full of _ after the loss.|
+mischief|The twins are always up to _.|
+mischievous|The _ monkey stole my sandwich.|No extra "i": mis-chie-vous.
+weird|There was a _ noise in the attic.|Weird is weird: it breaks the rule.
+seize|The police will _ the stolen goods.|Seize breaks the rule too.
+neighbour|Our _ waters our plants when we are away.|ei sounds like "ay"; British "our".
+weigh|Please _ the flour before you add it.|ei sounds like "ay".
+height|We measured the _ of the tree.|
+leisure|I like to read in my _ time.|`},
+{id:"ible", name:"-able or -ible", lines:`
+responsible|Who is _ for feeding the fish?|
+sensible|Bringing a raincoat was a _ choice.|
+terrible|There was a _ storm last night.|
+horrible|The medicine tasted _.|
+possible|Is it _ to finish by noon?|
+visible|The stars were _ after the rain cleared.|
+invisible|The ink became _ when it dried.|
+flexible|Gymnasts are very _.|
+edible|Are these berries _?|
+incredible|The view from the top was _.|
+irresistible|The smell of fresh bread was _.|
+comfortable|This sofa is very _.|comfort + able: say "com-FORT-able".
+valuable|The ring is very _.|value drops its e: valu + able.
+reliable|She is a _ friend who keeps her promises.|rely: the y becomes i.
+available|Is the room _ on Saturday?|
+remarkable|She made a _ recovery.|
+noticeable|The stain on his shirt was very _.|Keep the e so the c stays soft.
+knowledgeable|Our guide was very _ about birds.|Keep the e after the g.
+miserable|He felt _ after losing the match.|
+considerable|The repairs cost a _ amount of money.|`},
+{id:"endings", name:"Adding endings", lines:`
+truly|I am _ sorry for being late.|true drops its e: truly.
+argument|They had an _ about the rules.|argue drops its e: argument.
+argued|The twins _ over the remote control.|
+definitely|I will _ come to your party.|There's "finite" inside definitely.
+separately|Wrap each present _.|There's "a rat" in sepARATe.
+completely|The room was _ dark.|complete + ly.
+sincerely|I _ hope you feel better soon.|sincere + ly.
+extremely|It was _ hot in the afternoon.|extreme + ly.
+happiness|Her face shone with _.|happy: the y becomes i.
+beautiful|What a _ sunset!|Big Elephants Are Useful.
+merciful|The king was _ and set him free.|mercy: the y becomes i.
+plentiful|Food was _ at the buffet.|plenty: the y becomes i, and "ful" has one l.
+carefully|Carry the tray _.|careful + ly: two l's.
+accidentally|I _ knocked over the vase.|accidental + ly: two l's.
+finally|We _ reached the top of the hill.|final + ly: two l's.
+usually|I _ walk to school.|usual + ly: two l's.
+especially|I love fruit, _ mangoes.|
+gradually|The sky _ grew darker.|
+unfortunately|_, the zoo was closed.|un + fortunate + ly.
+desperately|The kitten _ needed food.|
+ninth|My brother came _ in the race.|nine drops its e: ninth.
+awful|The traffic was _ this morning.|awe drops its e: awful.
+hopping|The rabbit was _ around the garden.|hop + p + ing.
+hoping|I am _ for good weather.|hope drops its e: hoping.
+writing|Her _ is very neat.|write drops its e: writing.
+written|Have you _ your name on the paper?|Double t after a short vowel.
+forgetting|I keep _ my water bottle.|
+admitted|He _ that he broke the window.|
+controlled|The pilot _ the plane carefully.|
+regretted|She _ shouting at her friend.|
+shining|The sun was _ brightly.|shine drops its e.`},
+{id:"tion", name:"-tion, -sion, -cian", lines:`
+decision|It was a hard _ to make.|
+permission|You need _ to leave the class.|permit becomes permission: "ss".
+explosion|We heard a loud _.|
+confusion|There was _ about the time.|
+admission|_ to the museum is free.|
+discussion|We had a _ about the story.|
+attention|Please pay _ in class.|
+invitation|I got an _ to her birthday party.|
+competition|Our team won the _.|compete becomes competition.
+pollution|Air _ is harmful to our lungs.|
+electrician|The _ fixed the faulty wiring.|Many jobs end in "cian".
+musician|The _ played the violin beautifully.|music + ian.
+magician|The _ pulled a coin from my ear.|magic + ian.
+politician|The _ gave a long speech.|politic + ian.
+suspicion|The guard looked at him with _.|
+collision|There was a _ between two cars.|
+persuasion|After some _, Mum agreed.|`},
+{id:"vowels", name:"Tricky vowels", lines:`
+separate|Please _ the white clothes from the dark ones.|There's "a rat" in sepARATe.
+desperate|The lost hiker was _ for water.|
+temperature|The nurse took my _.|tem-PER-a-ture: say every part.
+environment|We must protect the _.|There's IRON in envIRONment.
+government|The _ built a new hospital.|govern + ment.
+February|My birthday is in _.|Feb-RU-ary: don't forget the first r.
+Wednesday|We have PE on _.|Wed-NES-day.
+library|I borrowed three books from the _.|lib-RAR-y.
+interesting|The documentary was very _.|
+different|We have _ hobbies.|
+vegetable|Carrot is my favourite _.|veg-E-table.
+chocolate|He ate a bar of _.|choc-O-late.
+favourite|Chicken rice is my _ food.|British spelling has "our".
+colour|What _ is your bag?|British spelling has "our".
+behaviour|Her _ in class was excellent.|British spelling has "our".
+category|Which _ does a whale belong to?|
+privilege|It was a _ to meet the President.|No "d": privilege.
+definite|We do not have a _ answer yet.|
+mathematics|_ is my best subject.|
+restaurant|We had dinner at a seafood _.|rest-au-rant.
+dinosaur|The _ fossil was millions of years old.|
+calendar|Mark the date on the _.|Ends in "ar".
+grammar|Check your _ before you hand it in.|Ends in "ar": don't mar your grammar.
+familiar|The song sounded _.|
+similar|The twins look very _.|Ends in "ar".
+particular|Is there a _ book you want?|
+ordinary|It was just an _ day.|
+frightened|The kitten was _ by the thunder.|fright + en + ed.
+mysterious|A _ parcel arrived at our door.|
+curious|The _ boy opened the box.|curiosity, but curious.
+generous|It was _ of you to share.|
+delicious|The laksa was _.|
+anxious|She felt _ before the exam.|
+nervous|I was _ about my speech.|
+courageous|The _ firefighter saved the child.|courage keeps its e before "ous".
+dangerous|Playing near the canal is _.|
+enormous|The whale was _.|
+jealous|He was _ of his brother's new bicycle.|
+awkward|There was an _ silence.|
+business|My uncle runs a small _.|There's a "bus" in business.
+exercise|Daily _ keeps you fit.|
+experience|The trip was an amazing _.|
+excellent|You did an _ job!|
+excitement|The children shrieked with _.|
+equipment|The sports _ is kept in the store.|No "t" before the m.
+pronunciation|Her _ is very clear.|pronounce, but pronunciation (no "o").
+sentence|Write a _ using the word "brave".|
+quarrel|The siblings had a _ over the toy.|`},
+{id:"gh", name:"gh and other odd ones", lines:`
+cough|He had a bad _ and a sore throat.|
+straight|Walk _ down the corridor.|
+through|We walked _ the forest.|
+thorough|The doctor gave him a _ check-up.|
+though|It was raining, _ we still went out.|
+caught|The goalkeeper _ the ball.|
+naughty|The _ puppy chewed my shoe.|
+daughter|Their _ is in Primary 5.|
+laughter|The room was filled with _.|
+bought|Mum _ a new fan.|
+brought|She _ a cake to school.|
+drought|The plants died during the _.|
+queue|We waited in the _ for an hour.|q-u-e-u-e: "ue" twice.
+tongue|The dog hung out its _.|
+biscuit|Would you like a _ with your tea?|A silent u: bis-cuit.
+build|They will _ a new MRT station here.|
+cousin|My _ lives in Johor Bahru.|`}
+];
+const BANK = RAW_BANK.map(g => ({
+  id: g.id, name: g.name, builtin: true,
+  words: g.lines.trim().split("\n").map(l => { const [w, s = "", t = ""] = l.split("|"); return { w: w.trim(), s: s.trim(), t: t.trim() }; })
+}));
+
+/* ---------- Storage ---------- */
+const KEY = "spellbuddy.v1";
+const INTERVALS = [1, 1, 3, 7, 14, 30]; // days until next review, by box
+const MASTERED_BOX = 4;
+function freshState(){ return { v:1, goal:10, mode:"listen", voice:"", off:{}, custom:[], cards:{}, log:{} }; }
+let S = freshState();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(freshState(), JSON.parse(raw)); } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const k = w => w.toLowerCase();
+function dayKey(d = new Date()){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDays(key, n){ const [y,m,d] = key.split("-").map(Number); return dayKey(new Date(y, m-1, d+n)); }
+function fromKey(key){ const [y,m,d] = key.split("-").map(Number); return new Date(y, m-1, d); }
+const today = () => dayKey();
+const ICON = {
+  play:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l11 7-11 7z"/></svg>',
+  flame:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5"/></svg>',
+  speaker:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+  slow:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M10 3h4"/></svg>',
+  close:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  bulb:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+  check:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
+};
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+
+/* ---------- Word lists ---------- */
+function allLists(){ return [...S.custom.map(c => ({...c, builtin:false})), ...BANK]; }
+function isOn(list){ return list.builtin ? !S.off[list.id] : list.on !== false; }
+function activeWords(){
+  const seen = new Set(), out = [];
+  for (const l of allLists()) { if (!isOn(l)) continue;
+    for (const w of l.words) { const key = k(w.w); if (seen.has(key)) continue; seen.add(key); out.push({...w, list:l.name}); } }
+  return out;
+}
+function statusOf(w){
+  const c = S.cards[k(w)];
+  if (!c) return ["New","s-new"];
+  if (c.box >= MASTERED_BOX) return ["Mastered","s-mastered"];
+  if (c.wrong >= 2) return ["Tricky","s-tricky"];
+  return ["Learning","s-learning"];
+}
+
+/* ---------- Daily plan ---------- */
+function todaysLog(){ return S.log[today()] || {done:0, first:0, fresh:0}; }
+function plan(extra){
+  const t = today(), words = activeWords();
+  const due = words.filter(w => { const c = S.cards[k(w.w)]; return c && c.due <= t; })
+                   .sort((a,b) => S.cards[k(a.w)].due.localeCompare(S.cards[k(b.w)].due));
+  const fresh = words.filter(w => !S.cards[k(w.w)]);
+  if (extra) {
+    if (fresh.length) return fresh.slice(0, extra);
+    return words.filter(w => S.cards[k(w.w)].box < MASTERED_BOX).sort((a,b) => S.cards[k(b.w)].wrong - S.cards[k(a.w)].wrong).slice(0, extra);
+  }
+  const reviews = due.slice(0, 20);
+  const room = Math.max(0, S.goal - todaysLog().done - reviews.length);
+  return [...reviews, ...fresh.slice(0, room)];
+}
+function streak(){
+  let d = today(); if (!(S.log[d] && S.log[d].done)) d = addDays(d, -1);
+  let n = 0; while (S.log[d] && S.log[d].done) { n++; d = addDays(d, -1); }
+  return n;
+}
+
+/* ---------- Speech ---------- */
+const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+let voices = [];
+function loadVoices(){ if (!canSpeak) return; voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)); if (!$("#words").hidden) renderWords(); }
+if (canSpeak) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  if (S.voice) { const v = voices.find(v => v.name === S.voice); if (v) return v; }
+  for (const pref of ["en-GB","en-SG","en-AU","en-IE","en-NZ","en-IN","en-US"]) { const v = voices.find(v => v.lang.replace("_","-").toLowerCase() === pref.toLowerCase()); if (v) return v; }
+  return voices[0] || null;
+}
+function say(text, rate = 0.9){
+  if (!canSpeak) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-GB"; u.rate = rate; speechSynthesis.speak(u); } catch(e) {}
+}
+const fullSentence = w => w.s ? w.s.replace(/_/g, w.w) : "";
+
+/* ---------- Spelling comparison ---------- */
+function align(attempt, correct){
+  const a = attempt.toLowerCase(), b = correct.toLowerCase(), n = a.length, m = b.length;
+  const D = Array.from({length:n+1}, () => new Array(m+1).fill(0));
+  for (let i=0;i<=n;i++) D[i][0]=i; for (let j=0;j<=m;j++) D[0][j]=j;
+  for (let i=1;i<=n;i++) for (let j=1;j<=m;j++)
+    D[i][j] = Math.min(D[i-1][j]+1, D[i][j-1]+1, D[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+  const ops = []; let i=n, j=m;
+  while (i>0 || j>0) {
+    if (i>0 && j>0 && D[i][j] === D[i-1][j-1] + (a[i-1]===b[j-1]?0:1)) { ops.push({t: a[i-1]===b[j-1]?"same":"sub", a:attempt[i-1], bi:j-1}); i--; j--; }
+    else if (i>0 && D[i][j] === D[i-1][j]+1) { ops.push({t:"extra", a:attempt[i-1]}); i--; }
+    else { ops.push({t:"missing", bi:j-1}); j--; }
+  }
+  return ops.reverse();
+}
+function describe(ops){
+  const extra = ops.filter(o=>o.t==="extra").length, miss = ops.filter(o=>o.t==="missing").length, sub = ops.filter(o=>o.t==="sub").length, total = extra+miss+sub;
+  if (total === 1) return extra ? "One letter too many." : miss ? "One letter is missing." : "One letter is wrong.";
+  if (total === 2 && sub === 2) return "Two letters are swapped or wrong.";
+  return total + " letters to fix.";
+}
+
+/* ---------- Recording results ---------- */
+function record(item, result){ // result: right | help | wrong
+  const key = k(item.w), t = today(), isNew = !S.cards[key];
+  const c = S.cards[key] || {box:0, right:0, wrong:0, list:item.list};
+  c.list = item.list;
+  if (result === "right") { c.box = Math.min(c.box + 1, INTERVALS.length - 1); c.right++; }
+  else if (result === "help") { c.right++; }
+  else { c.box = 0; c.wrong++; c.lastMiss = t; }
+  c.due = addDays(t, result === "right" ? INTERVALS[c.box] : 1);
+  S.cards[key] = c;
+  const L = S.log[t] || (S.log[t] = {done:0, first:0, fresh:0});
+  L.done++; if (result === "right") L.first++; if (isNew) L.fresh++;
+  save();
+}
+
+/* ---------- Navigation ---------- */
+const screens = ["home","practice","words","progress"];
+function show(name){
+  screens.forEach(s => $("#"+s).hidden = s !== name);
+  const inPractice = name === "practice";
+  $("#tabs").hidden = inPractice; $("#app").classList.toggle("full", inPractice);
+  document.querySelectorAll("#tabs button").forEach(b => { if (b.dataset.go === name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  if (reloadWhenIdle && name !== "practice") { location.reload(); return; }
+  ({home:renderHome, words:renderWords, progress:renderProgress})[name]?.();
+  window.scrollTo(0,0);
+}
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; b.dataset.go === "start" ? startSession() : show(b.dataset.go); });
+
+/* ---------- Home ---------- */
+function renderHome(){
+  const p = plan(), L = todaysLog(), st = streak(), now = new Date();
+  const dateStr = now.toLocaleDateString("en-SG", {weekday:"long", day:"numeric", month:"short"});
+  const reviews = p.filter(w => S.cards[k(w.w)]).length, fresh = p.length - reviews;
+  const firstList = allLists().find(l => isOn(l));
+  const monday = addDays(today(), -((now.getDay()+6)%7));
+  const days = ["M","T","W","T","F","S","S"].map((d,i) => { const key = addDays(monday,i); const on = S.log[key] && S.log[key].done; const cls = on ? "on" : key === today() ? "today" : ""; return `<div><span>${d}</span><span class="dot ${cls}"></span></div>`; }).join("");
+  const tricky = Object.entries(S.cards).filter(([,c]) => c.wrong > 0 && c.box < MASTERED_BOX).sort((a,b) => b[1].wrong - a[1].wrong).slice(0,6);
+  const wordName = key => (activeWords().find(w => k(w.w) === key) || {w:key}).w;
+  const hero = p.length ? `
+    <div class="hero">
+      <span class="eyebrow" style="color:inherit;opacity:.92">Today's practice</span>
+      <div class="big">${p.length} word${p.length>1?"s":""}</div>
+      <div class="chips">${fresh ? `<span class="chip">${fresh} new${firstList && !firstList.builtin ? " · "+esc(firstList.name) : ""}</span>` : ""}${reviews ? `<span class="chip">${reviews} to revisit</span>` : ""}</div>
+      <button class="btn block" type="button" id="go">${ICON.play} Start practising</button>
+      <span style="font-size:14px;opacity:.92">About ${Math.max(2, Math.round(p.length*1))} minutes</span>
+    </div>` : `
+    <div class="hero done">
+      <span class="eyebrow" style="color:inherit;opacity:.92">Today's practice</span>
+      <div class="big">All done!</div>
+      <span>${L.done ? `You practised ${L.done} word${L.done>1?"s":""} today. Words you missed will come back tomorrow.` : "No words are due. Turn on a word list in Words to keep going."}</span>
+      <button class="btn block" type="button" id="more">Practise 5 more</button>
+    </div>`;
+  $("#home").innerHTML = `
+    <div class="row between">
+      <div><div class="muted" style="font-weight:600;font-size:15px">${esc(dateStr)}</div><h1>Spelling Buddy</h1></div>
+      <span class="pill streak">${ICON.flame}<span>${st} day${st===1?"":"s"}</span></span>
+    </div>
+    ${hero}
+    <div class="card"><h2>This week</h2><div class="week">${days}</div></div>
+    ${tricky.length ? `<div class="screen" style="gap:10px"><h2>Tricky words to beat</h2><div class="chips">${tricky.map(([key]) => `<span class="wchip">${esc(wordName(key))}</span>`).join("")}</div></div>` : `<p class="note">Words she finds hard will show up here so you can see what to focus on.</p>`}`;
+  $("#go")?.addEventListener("click", () => startSession());
+  $("#more")?.addEventListener("click", () => startSession(5));
+}
+
+/* ---------- Practice ---------- */
+let P = null;
+function startSession(extra){
+  const q = plan(extra);
+  if (!q.length) { toast(activeWords().length ? "Nothing left to practise right now." : "Turn on a word list first."); show("words"); return; }
+  P = { queue: q.map(w => ({...w, again:false})), i:0, firstRight:0, firstTotal:q.length, missed:[] };
+  show("practice"); nextWord(true);
+}
+function nextWord(first){
+  if (!first) P.i++;
+  if (P.i >= P.queue.length) return renderSummary();
+  const it = P.queue[P.i];
+  P.cur = { it, hint:false, phase: S.mode === "look" || !canSpeak ? "look" : "ask", attempt:"" };
+  renderPractice();
+  if (P.cur.phase === "ask") setTimeout(() => say(it.w), 250);
+}
+function practiceTop(){
+  const pct = Math.round(P.i / P.queue.length * 100);
+  return `<div class="topbar"><button class="iconbtn" type="button" id="quit" aria-label="Stop practice">${ICON.close}</button>
+    <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
+    <span style="font-weight:800;font-size:15px;font-variant-numeric:tabular-nums">${Math.min(P.i+1, P.queue.length)}/${P.queue.length}</span></div>`;
+}
+function sentenceCard(it){ return it.s ? `<div class="sentence">“${esc(it.s).replace(/_/g,'<span class="blank"></span>')}”</div>` : ""; }
+function renderPractice(){
+  const c = P.cur, it = c.it, el = $("#practice");
+  let body = "";
+  if (c.phase === "look") {
+    body = `
+      <div class="screen" style="gap:6px;align-items:center;padding-top:16px"><span class="eyebrow">Look carefully</span><div class="lookword">${esc(it.w)}</div>
+      ${canSpeak ? `<button class="btn ghost small" type="button" id="hear">${ICON.speaker} Hear it</button>` : ""}</div>
+      ${sentenceCard(it)}
+      <p class="note" style="text-align:center">Say the letters in your head. When you're ready, cover it and write it from memory.</p>
+      <div class="grow"></div>
+      <button class="btn primary block" type="button" id="cover">Cover it and write</button>`;
+  } else if (c.phase === "ask" || c.phase === "write") {
+    body = `
+      ${c.phase === "ask" ? `<div class="speak"><span class="eyebrow">${it.again ? "One more try" : "Listen, then spell"}</span>
+        <button class="play" type="button" id="hear" aria-label="Play the word">${ICON.speaker}</button>
+        <div class="row wrap" style="justify-content:center">
+          <button class="btn ghost small" type="button" id="slow">${ICON.slow} Say it slowly</button>
+          ${it.s ? `<button class="btn ghost small" type="button" id="sent">Use in a sentence</button>` : ""}
+        </div></div>` : `<div class="speak"><span class="eyebrow">Write it from memory</span></div>`}
+      ${sentenceCard(it)}
+      <form class="field" id="f" autocomplete="off">
+        <label for="spell-input">Type the word</label>
+        <input id="spell-input" class="spell" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+        ${c.hint ? `<span class="hint">It starts with “${esc(it.w.slice(0,2))}…”</span>` : `<span class="note">Spell-check and autocorrect are switched off here.</span>`}
+      </form>
+      <div class="grow"></div>
+      <div class="screen" style="gap:6px">
+        <button class="btn primary block" type="submit" form="f">Check my spelling</button>
+        ${c.phase === "ask" && !c.hint && !it.again ? `<button class="btn text block" type="button" id="hint">Show the first letters (hint)</button>` : ""}
+      </div>`;
+  } else if (c.phase === "right") {
+    const msg = it.again ? "You got it this time. It will come back tomorrow to make sure it sticks."
+      : c.hint ? "Correct, with a hint. We'll practise it again tomorrow."
+      : (S.cards[k(it.w)] && S.cards[k(it.w)].box >= MASTERED_BOX) ? "Mastered! This word is locked in."
+      : "Spot on.";
+    body = `
+      <div class="result-ok" role="status"><span class="eyebrow" style="color:var(--blue)">Correct</span><span class="word">${esc(it.w)}</span><span>${msg}</span></div>
+      ${it.t ? tipCard(it.t) : ""}
+      <div class="grow"></div>
+      <button class="btn primary block" type="button" id="next">Next word</button>`;
+  } else if (c.phase === "wrong" || c.phase === "rewrite") {
+    const ops = align(c.attempt, it.w);
+    const tiles = ops.map(o => o.t==="same" ? `<span class="tile">${esc(o.a)}</span>`
+      : o.t==="sub" ? `<span class="tile bad">${esc(o.a)}</span>`
+      : o.t==="extra" ? `<span class="tile extra" aria-label="extra letter ${esc(o.a)}">${esc(o.a)}</span>`
+      : `<span class="tile missing" aria-label="missing letter">+</span>`).join("");
+    const fix = new Set(ops.filter(o => o.t==="sub" || o.t==="missing").map(o => o.bi));
+    const corr = [...it.w].map((ch,i) => fix.has(i) ? `<u>${esc(ch)}</u>` : esc(ch)).join("");
+    if (c.phase === "wrong") {
+      body = `
+        <div><h1 style="font-size:28px">${ops.filter(o=>o.t!=="same").length <= 1 ? "So close!" : "Not quite."}</h1><p class="muted" style="margin:4px 0 0">${describe(ops)} Let's fix it together.</p></div>
+        <div class="card">
+          <span class="eyebrow">You wrote</span><div class="tiles">${tiles}</div>
+          <span class="eyebrow">Correct spelling</span><div class="correct">${corr}</div>
+          ${canSpeak ? `<button class="btn ghost small" type="button" id="hear" style="align-self:flex-start">${ICON.speaker} Hear it</button>` : ""}
+        </div>
+        ${it.t ? tipCard(it.t) : ""}
+        <div class="grow"></div>
+        <button class="btn primary block" type="button" id="cover">Cover it and write it again</button>`;
+    } else {
+      body = `
+        <div><h1 style="font-size:28px">Now from memory</h1><p class="muted" style="margin:4px 0 0">The word is covered. Write it the right way.</p></div>
+        ${it.t ? tipCard(it.t) : ""}
+        <form class="field" id="f" autocomplete="off">
+          <label for="spell-input">Write it again</label>
+          <input id="spell-input" class="spell" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+        </form>
+        <div class="grow"></div>
+        <div class="screen" style="gap:6px">
+          <button class="btn primary block" type="submit" form="f">Check</button>
+          <button class="btn text block" type="button" id="peek">Peek at it again</button>
+        </div>`;
+    }
+  } else if (c.phase === "fixed") {
+    body = `
+      <div class="result-ok" role="status"><span class="eyebrow" style="color:var(--blue)">Fixed it</span><span class="word">${esc(it.w)}</span>
+      <span>${it.again ? "Good. It will come back tomorrow." : "Well done. It will come back at the end of this round, and again tomorrow."}</span></div>
+      <div class="grow"></div>
+      <button class="btn primary block" type="button" id="next">Next word</button>`;
+  }
+  el.innerHTML = practiceTop() + body;
+  el.style.minHeight = "calc(100dvh - 48px)";
+  $("#quit").onclick = () => { if (canSpeak) speechSynthesis.cancel(); P = null; show("home"); };
+  $("#hear") && ($("#hear").onclick = () => say(it.w));
+  $("#slow") && ($("#slow").onclick = () => say(it.w, 0.5));
+  $("#sent") && ($("#sent").onclick = () => say(fullSentence(it), 0.85));
+  $("#hint") && ($("#hint").onclick = () => { c.hint = true; renderPractice(); });
+  $("#cover") && ($("#cover").onclick = () => { c.phase = c.phase === "look" ? "write" : "rewrite"; renderPractice(); });
+  $("#peek") && ($("#peek").onclick = () => { c.phase = "wrong"; renderPractice(); });
+  $("#next") && ($("#next").onclick = () => nextWord(false));
+  const f = $("#f"); if (f) { f.onsubmit = e => { e.preventDefault(); check(); }; setTimeout(() => $("#spell-input")?.focus(), 50); }
+  $("#next")?.focus();
+}
+function tipCard(t){ return `<div class="tip">${ICON.bulb}<div><div style="font-weight:800;font-size:15px">Memory trick</div><div>${esc(t)}</div></div></div>`; }
+function check(){
+  const c = P.cur, it = c.it, input = $("#spell-input"), ans = input.value.trim();
+  if (!ans) { input.classList.remove("shake"); void input.offsetWidth; input.classList.add("shake"); return; }
+  const ok = ans.toLowerCase() === it.w.toLowerCase();
+  if (c.phase === "rewrite") {
+    if (ok) { c.phase = "fixed"; renderPractice(); }
+    else { c.attempt = ans; c.phase = "wrong"; renderPractice(); toast("Not yet. Look at it once more."); }
+    return;
+  }
+  // ask or write
+  if (ok) {
+    if (!it.again) { record(it, c.hint ? "help" : "right"); if (!c.hint) P.firstRight++; }
+    c.phase = "right"; renderPractice(); if (!c.hint && !it.again) say("Correct!", 1);
+  } else {
+    if (!it.again) { record(it, "wrong"); P.missed.push(it.w); P.queue.push({...it, again:true}); }
+    c.attempt = ans; c.phase = "wrong"; renderPractice();
+  }
+}
+function renderSummary(){
+  const st = streak(), pct = Math.round(P.firstRight / P.firstTotal * 100);
+  $("#practice").innerHTML = `
+    <div class="screen" style="gap:6px;padding-top:24px"><span class="eyebrow">Round finished</span><h1>${pct >= 80 ? "Brilliant work!" : pct >= 50 ? "Good effort!" : "Well done for finishing!"}</h1></div>
+    <div class="stats">
+      <div class="stat"><b style="color:var(--blue)">${P.firstRight}/${P.firstTotal}</b><span class="muted" style="font-weight:700;font-size:14px">right first time</span></div>
+      <div class="stat"><b style="color:var(--orange)">${st}</b><span class="muted" style="font-weight:700;font-size:14px">day streak</span></div>
+    </div>
+    ${P.missed.length ? `<div class="card"><h2>Coming back tomorrow</h2><div class="chips">${P.missed.map(w => `<span class="wchip">${esc(w)}</span>`).join("")}</div></div>` : `<p class="muted">No mistakes today. These words will come back in a few days to check they've stuck.</p>`}
+    <div class="grow"></div>
+    <button class="btn primary block" type="button" id="done">Back to home</button>`;
+  $("#done").onclick = () => { P = null; show("home"); };
+  $("#done").focus();
+}
+
+/* ---------- Words ---------- */
+let pendingDelete = null, confirmReset = false;
+function listCard(l){
+  const total = l.words.length, mastered = l.words.filter(w => statusOf(w.w)[0] === "Mastered").length;
+  const id = l.builtin ? l.id : l.id, on = isOn(l);
+  return `<details class="list">
+    <summary><div class="row between"><span class="lname">${esc(l.name)}</span><span class="lcount">${mastered} / ${total} mastered</span></div>
+      <div class="meter"><span style="width:${total ? mastered/total*100 : 0}%"></span></div></summary>
+    <div class="lbody">
+      <label class="toggle"><input type="checkbox" data-toggle="${esc(id)}" ${on ? "checked" : ""}> Include in daily practice</label>
+      <div>${l.words.map(w => { const [s, cls] = statusOf(w.w); return `<div class="wordrow"><span>${esc(w.w)}</span><span class="status ${cls}">${s}</span></div>`; }).join("")}</div>
+      ${!l.builtin ? (pendingDelete === l.id
+        ? `<div class="confirm" role="alert"><span>Delete “${esc(l.name)}”? Her progress on these words is kept.</span><div class="row"><button class="btn small primary" type="button" data-del-yes="${esc(l.id)}">Delete list</button><button class="btn small ghost" type="button" data-del-no>Keep it</button></div></div>`
+        : `<button class="btn small ghost" type="button" data-del="${esc(l.id)}" style="align-self:flex-start">Delete list</button>`) : ""}
+    </div></details>`;
+}
+function renderWords(){
+  const open = new Set([...document.querySelectorAll("#words details[open]")].map(d => d.querySelector("[data-toggle]")?.dataset.toggle));
+  const draftName = $("#list-name")?.value ?? "", draftWords = $("#list-words")?.value ?? "";
+  const voiceOpts = voices.map(v => `<option value="${esc(v.name)}" ${S.voice === v.name ? "selected" : ""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("");
+  $("#words").innerHTML = `
+    <div class="row between"><h1 style="font-size:28px">Word lists</h1><span class="pill" style="background:var(--surface-2);color:var(--muted)">For parents</span></div>
+    <form class="card" id="addlist" autocomplete="off">
+      <h2>Add her school spelling list</h2>
+      <div class="field"><label for="list-name">List name</label><input id="list-name" class="txt" type="text" placeholder="e.g. Term 4 Week 3" value="${esc(draftName)}"></div>
+      <div class="field"><label for="list-words">Words, one per line</label>
+        <textarea id="list-words" placeholder="necessary&#10;rhythm | We clapped to the rhythm of the drums.">${esc(draftWords)}</textarea>
+        <span class="note">Optional: add a sentence after a “|” so she can hear the word in context.</span></div>
+      <button class="btn primary block" type="submit">Save list</button>
+    </form>
+    ${S.custom.length ? `<div class="screen" style="gap:10px"><h2>Her lists</h2>${S.custom.map(c => listCard({...c, builtin:false})).join("")}</div>` : ""}
+    <div class="screen" style="gap:10px"><h2>PSLE word bank</h2>
+      <p class="note" style="margin:0">PSLE has no official spelling list. Spelling is tested in Paper 2 Editing, so these are words from past PSLE editing answers and words P5–P6 pupils often misspell, grouped by the trap they set.</p>
+      ${BANK.map(listCard).join("")}</div>
+    <div class="card"><h2>Settings</h2>
+      <div class="field"><label for="goal">Words per day</label><select id="goal">${[5,10,15,20].map(n => `<option ${S.goal===n?"selected":""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label for="mode">How words are shown</label><select id="mode">
+        <option value="listen" ${S.mode==="listen"?"selected":""}>Listen and spell (like a spelling test)</option>
+        <option value="look" ${S.mode==="look"?"selected":""}>Look, cover, write, check</option></select>
+        ${canSpeak ? "" : `<span class="note">This device can't read words aloud, so the app uses Look, cover, write, check.</span>`}</div>
+      ${canSpeak ? `<div class="field"><label for="voice">Voice</label><select id="voice"><option value="">Automatic (British English if available)</option>${voiceOpts}</select>
+        <button class="btn small ghost" type="button" id="testvoice" style="align-self:flex-start">${ICON.speaker} Test voice</button></div>` : ""}
+      ${confirmReset ? `<div class="confirm" role="alert"><span>Erase all progress, streaks and her lists? This can't be undone.</span><div class="row wrap"><button class="btn small primary" type="button" id="reset-yes">Erase everything</button><button class="btn small ghost" type="button" id="reset-no">Cancel</button></div></div>`
+        : `<button class="btn small ghost" type="button" id="reset" style="align-self:flex-start">Reset all progress</button>`}
+      <p class="note" style="margin:0">Progress is saved on this device only.</p>
+    </div>
+    ${backupCard()}`;
+  document.querySelectorAll("#words details").forEach(d => { if (open.has(d.querySelector("[data-toggle]")?.dataset.toggle)) d.open = true; });
+  $("#addlist").onsubmit = e => {
+    e.preventDefault();
+    const name = $("#list-name").value.trim() || "My list " + (S.custom.length + 1);
+    const seen = new Set();
+    const words = $("#list-words").value.split(/\n|,/).map(l => l.trim()).filter(Boolean).map(l => {
+      const [w, s = ""] = l.split("|").map(x => x.trim()); if (!w || seen.has(k(w))) return null; seen.add(k(w));
+      let sent = s; if (sent && new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i").test(sent)) sent = sent.replace(new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","gi"), "_"); else if (sent) sent = "";
+      return { w, s: sent, t: "" };
+    }).filter(Boolean);
+    if (!words.length) { toast("Add at least one word."); $("#list-words").focus(); return; }
+    S.custom.unshift({ id: "c" + Date.now(), name, on: true, words }); save();
+    $("#list-name").value = ""; $("#list-words").value = "";
+    renderWords(); toast(`Saved “${name}” with ${words.length} word${words.length>1?"s":""}.`);
+  };
+  document.querySelectorAll("[data-toggle]").forEach(cb => cb.onchange = () => {
+    const id = cb.dataset.toggle, c = S.custom.find(x => x.id === id);
+    if (c) c.on = cb.checked; else { if (cb.checked) delete S.off[id]; else S.off[id] = true; }
+    save(); renderWords();
+  });
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { pendingDelete = b.dataset.del; renderWords(); });
+  document.querySelectorAll("[data-del-no]").forEach(b => b.onclick = () => { pendingDelete = null; renderWords(); });
+  document.querySelectorAll("[data-del-yes]").forEach(b => b.onclick = () => { S.custom = S.custom.filter(c => c.id !== b.dataset.delYes); pendingDelete = null; save(); renderWords(); toast("List deleted."); });
+  $("#goal").onchange = e => { S.goal = +e.target.value; save(); };
+  $("#mode").onchange = e => { S.mode = e.target.value; save(); };
+  $("#voice") && ($("#voice").onchange = e => { S.voice = e.target.value; save(); say("necessary"); });
+  $("#testvoice") && ($("#testvoice").onclick = () => say("It is necessary to wear a helmet when you cycle."));
+  $("#reset") && ($("#reset").onclick = () => { confirmReset = true; renderWords(); });
+  $("#reset-no") && ($("#reset-no").onclick = () => { confirmReset = false; renderWords(); });
+  $("#reset-yes") && ($("#reset-yes").onclick = () => { S = freshState(); save(); confirmReset = false; renderWords(); toast("Progress erased."); });
+  wireBackup();
+}
+
+/* ---------- Backup: move progress between devices ----------
+   The code is the whole saved state, JSON → base64, with a prefix.
+   Restoring MERGES into this device, so nothing she did here is lost:
+   for each word the record with more attempts wins, for each day the bigger log wins,
+   and her own lists are combined. */
+const BACKUP_PREFIX = "SPELLBUDDY1:";
+let bkDraft = "", bkShown = false;
+function backupCode(){
+  const bytes = new TextEncoder().encode(JSON.stringify(S));
+  let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b));
+  return BACKUP_PREFIX + btoa(bin);
+}
+function readBackup(text){
+  const raw = String(text).replace(/\s+/g, "");
+  if (!raw.startsWith(BACKUP_PREFIX)) throw new Error("prefix");
+  const bin = atob(raw.slice(BACKUP_PREFIX.length));
+  const data = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+  if (!data || typeof data !== "object" || typeof data.cards !== "object" || typeof data.log !== "object") throw new Error("shape");
+  return data;
+}
+function mergeBackup(data){
+  const attempts = c => (c && (c.right || 0) + (c.wrong || 0)) || 0;
+  const freshDevice = !Object.keys(S.cards).length;
+  let words = 0;
+  for (const [key, c] of Object.entries(data.cards || {})) {
+    if (attempts(c) > attempts(S.cards[key])) { S.cards[key] = c; words++; }
+  }
+  for (const [day, L] of Object.entries(data.log || {})) {
+    if (!S.log[day] || (L && L.done > S.log[day].done)) S.log[day] = L;
+  }
+  const have = new Set(S.custom.map(c => c.id));
+  for (const c of (data.custom || [])) if (c && c.id && !have.has(c.id)) S.custom.push(c);
+  for (const id of Object.keys(data.off || {})) S.off[id] = true;
+  if (freshDevice) { // a brand-new install takes over her settings too
+    if ([5,10,15,20].includes(data.goal)) S.goal = data.goal;
+    if (data.mode === "listen" || data.mode === "look") S.mode = data.mode;
+  }
+  save();
+  return words;
+}
+function backupCard(){
+  return `<div class="card" id="backup"><h2>Move progress to another device</h2>
+    <p class="note" style="margin:0">Copy the backup code on this device, then paste it into Spelling Buddy on the other one. It carries her streak, word progress and her own lists.</p>
+    <button class="btn small ghost" type="button" id="bk-copy" style="align-self:flex-start">Copy backup code</button>
+    <div class="field" ${bkShown ? "" : "hidden"} id="bk-out-wrap"><label for="bk-out">Backup code</label>
+      <textarea id="bk-out" readonly style="min-height:80px;font-size:13px;word-break:break-all"></textarea>
+      <span class="note">If copying didn't work, press and hold the box, then choose Select All and Copy.</span></div>
+    <div class="field"><label for="bk-in">Paste a backup code</label>
+      <textarea id="bk-in" style="min-height:80px;font-size:13px;word-break:break-all" placeholder="${BACKUP_PREFIX}…">${esc(bkDraft)}</textarea></div>
+    <button class="btn small primary" type="button" id="bk-restore" style="align-self:flex-start">Restore progress</button>
+    <p class="note" style="margin:0">Restoring adds the backup to what's already here. Nothing on this device is erased.</p>
+  </div>`;
+}
+function wireBackup(){
+  const out = $("#bk-out");
+  if (bkShown && out) out.value = backupCode();
+  $("#bk-copy").onclick = () => {
+    const code = backupCode();
+    bkShown = true; $("#bk-out-wrap").hidden = false; out.value = code;
+    const fallback = () => { out.focus(); out.select(); toast("Code selected. Copy it to move her progress."); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => toast("Backup code copied."), fallback);
+      else fallback();
+    } catch(e) { fallback(); }
+  };
+  $("#bk-in").oninput = e => { bkDraft = e.target.value; };
+  $("#bk-restore").onclick = () => {
+    const input = $("#bk-in");
+    if (!input.value.trim()) { toast("Paste a backup code first."); input.focus(); return; }
+    let data;
+    try { data = readBackup(input.value); }
+    catch(e) { toast("That code didn't work. Copy the whole code and try again."); input.focus(); return; }
+    const n = mergeBackup(data);
+    bkDraft = ""; renderWords();
+    toast(`Progress restored: ${n} word${n === 1 ? "" : "s"} updated, ${streak()}-day streak.`);
+  };
+}
+
+/* ---------- Progress ---------- */
+function renderProgress(){
+  const cards = Object.entries(S.cards);
+  const mastered = cards.filter(([,c]) => c.box >= MASTERED_BOX).length;
+  const t = today(), now = fromKey(t), monday = addDays(t, -((now.getDay()+6)%7));
+  const weeks = [];
+  for (let w = 5; w >= 0; w--) {
+    const start = addDays(monday, -7*w); let done = 0, first = 0;
+    for (let d = 0; d < 7; d++) { const L = S.log[addDays(start, d)]; if (L) { done += L.done; first += L.first; } }
+    weeks.push({ label: w === 0 ? "This wk" : fromKey(start).toLocaleDateString("en-SG", {day:"numeric", month:"short"}), pct: done ? Math.round(first/done*100) : null, now: w === 0 });
+  }
+  const hasData = weeks.some(w => w.pct !== null);
+  const groups = {};
+  cards.forEach(([key,c]) => { if (!c.wrong) return; const g = groups[c.list] || (groups[c.list] = {n:0, words:[]}); g.n += c.wrong; g.words.push([key, c.wrong]); });
+  const names = Object.fromEntries(activeWords().map(w => [k(w.w), w.w]));
+  const patterns = Object.entries(groups).sort((a,b) => b[1].n - a[1].n).slice(0,5);
+  const practised = cards.length;
+  $("#progress").innerHTML = `
+    <h1 style="font-size:28px">Progress</h1>
+    <div class="stats">
+      <div class="stat"><b style="color:var(--blue)">${mastered}</b><span class="muted" style="font-weight:700;font-size:14px">words mastered</span></div>
+      <div class="stat"><b style="color:var(--orange)">${streak()}</b><span class="muted" style="font-weight:700;font-size:14px">day streak</span></div>
+      <div class="stat"><b>${practised}</b><span class="muted" style="font-weight:700;font-size:14px">words practised</span></div>
+      <div class="stat"><b>${activeWords().length - practised}</b><span class="muted" style="font-weight:700;font-size:14px">still to start</span></div>
+    </div>
+    <div class="card">
+      <div class="row between"><h2>Right first time</h2><span class="note">last 6 weeks</span></div>
+      ${hasData ? `<div class="chart" role="img" aria-label="Share of words spelt right on the first try each week: ${weeks.map(w => `${w.label} ${w.pct ?? "no practice"}${w.pct!==null?"%":""}`).join(", ")}">
+        ${weeks.map(w => `<div class="col ${w.now?"now":""}"><span class="v">${w.pct===null ? "–" : w.pct+"%"}</span><div class="b" style="height:${w.pct===null ? 0 : Math.max(4, w.pct)}%"></div><span class="l">${esc(w.label)}</span></div>`).join("")}
+      </div>` : `<p class="note" style="margin:0">After her first round, this chart shows how often she spells words right on the first try each week.</p>`}
+    </div>
+    <div class="screen" style="gap:10px"><h2>Mistake patterns</h2>
+      ${patterns.length ? `<div class="card" style="gap:0">${patterns.map(([g, v]) => `<div class="prow"><div style="min-width:0"><div style="font-weight:800">${esc(g)}</div><div class="note">${v.words.sort((a,b)=>b[1]-a[1]).slice(0,3).map(([key]) => esc(names[key] || key)).join(", ")}</div></div><span style="font-weight:800;color:var(--orange-ink);font-variant-numeric:tabular-nums">${v.n}×</span></div>`).join("")}</div>`
+        : `<p class="note" style="margin:0">Once she misses a few words, this shows which kinds of spelling trip her up (double letters, silent letters and so on).</p>`}
+    </div>`;
+}
+
+
+/* ---------- Offline + updates ----------
+   sw.js keeps a copy of the app on the device. When a new version is published,
+   the phone downloads it in the background the next time it's online and switches over
+   at a calm moment (never in the middle of a practice round). */
+let reloadWhenIdle = false;
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e) {}
+if ("serviceWorker" in navigator) {
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) { hadController = true; return; }   // first install: nothing to refresh
+    if (P) reloadWhenIdle = true; else location.reload();
+  });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+    }).catch(() => {});
+  });
+}
+
+show("home");
+</script>
+
+</body>
+</html>
