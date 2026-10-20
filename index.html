@@ -170,6 +170,27 @@ nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:re
 nav.tabs button{min-height:54px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:12px}
 nav.tabs button[aria-current="page"]{color:var(--orange);font-weight:800}
 nav.tabs svg.i{width:22px;height:22px}
+/* Install banner: drops in at the top on a visit from the browser, leaves by itself */
+.install{position:fixed;left:0;right:0;top:0;z-index:30;
+  padding:calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+  transform:translateY(-110%);transition:transform .35s ease;pointer-events:none}
+.install.show{transform:none}
+.install .in{pointer-events:auto;max-width:480px;margin:0 auto;background:var(--surface);border:1.5px solid var(--line);border-radius:20px;
+  box-shadow:0 12px 32px var(--shadow);padding:14px 14px 0;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.install .top{display:flex;align-items:center;gap:12px}
+.install img{width:48px;height:48px;border-radius:12px;flex-shrink:0}
+.install .txt-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.install b{font-family:var(--display);font-weight:600;font-size:18px;line-height:1.2}
+.install .sub{font-size:14px;color:var(--muted);line-height:1.35}
+.install .iconbtn{background:var(--surface-2);width:40px;height:40px}
+.install .steps{display:flex;flex-direction:column;gap:6px;font-size:15px;font-weight:700}
+.install .steps span{display:flex;align-items:center;gap:8px}
+.install .steps svg.i{color:var(--blue)}
+.install .actions{display:flex;justify-content:flex-end}
+.install .timer{height:4px;background:var(--surface-2);margin:0 -14px}
+.install .timer>span{display:block;height:100%;width:100%;background:var(--orange);transform-origin:left;transform:scaleX(1)}
+.install.counting .timer>span{transform:scaleX(0);transition:transform linear var(--install-ms, 15s)}
+.install.paused .timer>span{transform:scaleX(1);transition:none}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -188,6 +209,22 @@ nav.tabs svg.i{width:22px;height:22px}
     <button type="button" data-go="progress"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Progress</button>
   </div>
 </nav>
+
+<div class="install" id="install" role="dialog" aria-labelledby="install-title" aria-describedby="install-sub" hidden>
+  <div class="in">
+    <div class="top">
+      <img src="icons/icon-192.png" alt="">
+      <div class="txt-wrap"><b id="install-title">Install Spelling Buddy</b><span class="sub" id="install-sub">Put it on your home screen. It works with no internet.</span></div>
+      <button class="iconbtn" type="button" id="install-close" aria-label="Not now"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="steps" id="install-steps" hidden>
+      <span>1. Tap <svg class="i" viewBox="0 0 24 24" aria-label="Share"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg> Share</span>
+      <span>2. Choose “Add to Home Screen”</span>
+    </div>
+    <div class="actions" id="install-actions" hidden><button class="btn small primary" type="button" id="install-go">Install</button></div>
+    <div class="timer" aria-hidden="true"><span></span></div>
+  </div>
+</div>
 
 <script>
 /* ---------- Word bank ----------
@@ -944,6 +981,51 @@ function renderProgress(){
     </div>`;
 }
 
+
+/* ---------- Install banner ----------
+   Shown on each visit from a browser tab, never inside the installed app.
+   Chrome/Edge/Samsung: one-tap Install via beforeinstallprompt.
+   iPhone/iPad: no install API, so it shows the Share → Add to Home Screen steps.
+   Leaves after 15 s (paused while touched); "Not now" hides it for 7 days. */
+const INSTALL_KEY = "spellbuddy.installSnooze", INSTALL_MS = 15000;
+let deferredInstall = null, installTimer = null, installShown = false;
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function installSnoozed(){ try { return Date.now() < +(localStorage.getItem(INSTALL_KEY) || 0); } catch(e) { return false; } }
+function hideInstall(snooze){
+  const el = $("#install"); clearTimeout(installTimer);
+  el.classList.remove("show");
+  setTimeout(() => { el.hidden = true; }, 400);
+  if (snooze) { try { localStorage.setItem(INSTALL_KEY, String(Date.now() + 7*864e5)); } catch(e) {} }
+}
+function startInstallTimer(){
+  const el = $("#install");
+  el.style.setProperty("--install-ms", INSTALL_MS + "ms");
+  el.classList.remove("counting", "paused"); void el.offsetWidth; el.classList.add("counting");
+  clearTimeout(installTimer); installTimer = setTimeout(() => hideInstall(false), INSTALL_MS);
+}
+function showInstall(mode){ // "prompt" | "ios"
+  if (installShown || isStandalone() || installSnoozed() || P) return;
+  installShown = true;
+  const el = $("#install");
+  $("#install-actions").hidden = mode !== "prompt";
+  $("#install-steps").hidden = mode !== "ios";
+  el.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.classList.add("show"); startInstallTimer(); }));
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; setTimeout(() => showInstall("prompt"), 1200); });
+window.addEventListener("appinstalled", () => { deferredInstall = null; hideInstall(false); toast("Installed. Open Spelling Buddy from your home screen."); });
+if (isIOS) setTimeout(() => showInstall("ios"), 1200);
+$("#install-close").onclick = () => hideInstall(true);
+$("#install-go").onclick = () => {
+  if (!deferredInstall) { hideInstall(false); return; }
+  deferredInstall.prompt();
+  deferredInstall.userChoice.finally(() => { deferredInstall = null; hideInstall(false); });
+};
+// Hold the banner while she's touching or reading it; restart the countdown when she lets go.
+$("#install").addEventListener("pointerenter", () => { clearTimeout(installTimer); $("#install").classList.add("paused"); });
+$("#install").addEventListener("pointerdown", () => { clearTimeout(installTimer); $("#install").classList.add("paused"); });
+$("#install").addEventListener("pointerleave", () => { if ($("#install").classList.contains("show")) startInstallTimer(); });
 
 /* ---------- Offline + updates ----------
    sw.js keeps a copy of the app on the device. When a new version is published,
