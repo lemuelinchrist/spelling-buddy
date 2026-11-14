@@ -719,9 +719,11 @@ function plan(extra){
     if (fresh.length) return fresh.slice(0, extra);
     return words.filter(w => S.cards[k(w.w)].box < MASTERED_BOX).sort((a,b) => S.cards[k(b.w)].wrong - S.cards[k(a.w)].wrong).slice(0, extra);
   }
-  const reviews = due.slice(0, 20);
-  const room = Math.max(0, S.goal - todaysLog().done - reviews.length);
-  return [...reviews, ...fresh.slice(0, room)];
+  // The daily goal is a hard cap: reviews come first, new words fill what is left,
+  // and any reviews that do not fit simply stay due for tomorrow.
+  const left = Math.max(0, S.goal - todaysLog().done);
+  const reviews = due.slice(0, left);
+  return [...reviews, ...fresh.slice(0, left - reviews.length)];
 }
 function streak(){
   let d = today(); if (!(S.log[d] && S.log[d].done)) d = addDays(d, -1);
