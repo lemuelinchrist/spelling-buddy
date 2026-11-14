@@ -11,6 +11,7 @@ No build step, no dependencies.
   `spellbuddy.v1.p2`, and the toggle/names/active profile live in `spellbuddy.profiles`. Turning it off keeps both saved.
 - `LEVELS` holds each level's word bank, default daily goal and wording. Banks are `RAW_BANK_P3` and `RAW_BANK_P56`.
 - Saved data from before levels existed is treated as `p56`.
+- `RAW_MEANINGS` holds a short kid-friendly meaning per word (shared by both levels). When you add a word to a bank, add its meaning there too; school lists have none.
 - Copy is child-neutral (no "her"/"his"); child-facing screens address the child as "you".
 - Must work at phone width (~390px) and on tablets in portrait and landscape (layout widens at 700px).
 

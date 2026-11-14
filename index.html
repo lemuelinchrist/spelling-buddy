@@ -132,6 +132,15 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .correct{font-family:var(--display);font-size:34px;font-weight:600;letter-spacing:.04em;color:var(--blue);word-break:break-word}
 .correct u{text-decoration-thickness:3px;text-underline-offset:6px}
 .tip{background:var(--surface-2);border-radius:20px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.tip.mean svg{stroke:var(--orange)}
+.tip .eg{margin-top:4px;color:var(--muted);font-size:15px}
+.tip .btn{margin-top:8px}
+.wd{border-top:1px solid var(--surface-2)}
+.wd>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;min-height:44px}
+.wd>summary::-webkit-details-marker{display:none}
+.wd>summary>span:first-child{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.wd .wmean{padding:0 0 10px;display:flex;flex-direction:column;gap:4px}
+.wd .wmean .eg{color:var(--muted);font-size:15px}
 .tip svg{width:26px;height:26px;stroke:var(--blue)}
 .grow{flex:1}
 
@@ -654,6 +663,324 @@ const parseBank = raw => raw.map(g => ({
   id: g.id, name: g.name, builtin: true,
   words: g.lines.trim().split("\n").map(l => { const [w, s = "", t = ""] = l.split("|"); return { w: w.trim(), s: s.trim(), t: t.trim() }; })
 }));
+/* ---------- Kid-friendly meanings ----------
+   One short meaning per word, shared by both levels. Line format: word|meaning
+   Shown after each answer, in "look" mode and in the word lists. School lists have none. */
+const RAW_MEANINGS = `
+because|Used to give the reason for something. "I wore a raincoat because it was raining."
+friend|Someone you like and enjoy being with.
+said|What someone spoke out loud. It is the past of "say".
+people|More than one person.
+again|One more time.
+answer|What you say or write when someone asks you a question.
+favourite|The one you like best of all.
+colour|Red, blue and green are colours. It is what you see when light hits something.
+believe|To feel sure that something is true.
+different|Not the same as something else.
+beautiful|Very nice to look at or listen to.
+surprise|Something you did not expect. Also, to give someone a surprise.
+enough|As much as you need. Not too little.
+thought|An idea in your mind. Also the past of "think".
+caught|Grabbed something that was moving. It is the past of "catch".
+laugh|The sound you make when something is funny. Ha ha!
+early|Before the usual or expected time.
+heard|Took in a sound with your ears. It is the past of "hear".
+school|The place where children go to learn.
+rabbit|A small furry animal with long ears that hops.
+happy|Feeling glad and cheerful.
+dinner|The main meal of the day, usually eaten in the evening.
+letter|A sign we write for a sound, like A or B. Also a message written on paper and posted.
+butter|A soft yellow food made from milk. You spread it on bread.
+sudden|Happening quickly when you do not expect it.
+yellow|The colour of a banana or the sun.
+pillow|A soft cushion you rest your head on in bed.
+balloon|A rubber bag you blow up with air. It floats if filled with special gas.
+carrot|An orange vegetable that grows under the ground.
+coffee|A hot brown drink that grown-ups like. It is made from roasted beans.
+middle|The part in the centre, with the same amount on each side.
+puzzle|A game or problem that makes you think to solve it.
+tomorrow|The day after today.
+borrow|To take something for a while and then give it back.
+dollar|Money used in Singapore. One dollar is 100 cents.
+kitten|A baby cat.
+knee|The joint in the middle of your leg that lets it bend.
+knock|To hit a door with your hand to say "I am here".
+knife|A tool with a sharp edge for cutting.
+know|To have something in your mind. "I know the answer."
+write|To make letters and words with a pen or pencil.
+wrong|Not right. A mistake.
+wrap|To cover something by folding paper or cloth around it.
+lamb|A baby sheep.
+climb|To go up something, like a tree or a hill.
+comb|A tool with teeth for tidying your hair. Also to tidy your hair with it.
+listen|To pay attention so you can hear.
+castle|A big old building with thick walls where kings and queens lived.
+hour|Sixty minutes.
+half|One of two equal parts of something.
+talk|To say words to someone.
+island|Land with water all around it. Sentosa is one.
+ghost|A spirit of someone who has died, in scary stories.
+sign|A notice that tells you something. Also to write your name.
+stopped|Did not go on any more. It is the past of "stop".
+hopping|Jumping on one foot, or jumping like a rabbit.
+running|Moving fast on your feet.
+swimming|Moving through water by using your arms and legs.
+sitting|Resting with your bottom on a seat or the floor.
+getting|Receiving something, or becoming something.
+shopping|Going to a shop to buy things.
+clapped|Hit your hands together to make a sound. It is the past of "clap".
+making|Building or creating something.
+riding|Sitting on something that moves, like a bicycle or a horse, and going along.
+smiling|Showing you are happy by turning up the corners of your mouth.
+baked|Cooked in an oven, like a cake or bread.
+hoped|Wished that something would happen. It is the past of "hope".
+cried|Had tears coming from your eyes. Also shouted out loudly.
+tried|Did your best to do something. It is the past of "try".
+hurried|Moved or did something quickly because you had little time.
+playing|Having fun with games or toys.
+boxes|More than one box. A box is a container with straight sides.
+buses|More than one bus. A bus is a big vehicle that carries many people.
+dishes|Plates and bowls that hold food. Also, meals that are cooked.
+watches|Small clocks you wear on your wrist. Also, looks at something carefully.
+babies|Very young children who cannot walk or talk yet.
+stories|Tales that tell about things that happened, real or made up.
+families|Groups of people who are related, like parents and children.
+leaves|The flat green parts of a tree or plant. Also, goes away from a place.
+knives|More than one knife. A knife is used for cutting.
+wolves|Wild animals like big dogs that hunt in groups.
+tomatoes|Round red fruits that we eat in salads and sauces.
+potatoes|Round vegetables that grow under the ground. Chips are made from them.
+children|Boys and girls. More than one child.
+mice|More than one mouse. A mouse is a small animal with a long tail.
+teeth|The hard white parts in your mouth that you use to bite and chew.
+feet|The parts at the end of your legs that you stand on. More than one foot.
+women|Grown-up ladies. More than one woman.
+Wednesday|The day after Tuesday and before Thursday.
+Thursday|The day after Wednesday and before Friday.
+Saturday|The day after Friday. Many people do not go to school or work.
+January|The first month of the year.
+February|The second month of the year. It is the shortest month.
+August|The eighth month of the year. National Day is in this month.
+December|The twelfth and last month of the year.
+forty|The number 40. It is four tens.
+eighty|The number 80. It is eight tens.
+ninety|The number 90. It is nine tens.
+twelve|The number 12. It is ten and two more.
+hundred|The number 100. It is ten tens.
+thousand|The number 1000. It is ten hundreds.
+second|Number two in a line. Also a very short time, like one tick of a clock.
+immediately|Right now, with no waiting.
+contagious|Can be passed from one person to another. A cold is contagious.
+fluid|Anything that flows, like water or juice.
+scratching|Rubbing something with your nails or claws, often because it itches.
+recuperate|To rest and get well again after being sick.
+lethargic|Feeling tired and slow, with no energy.
+necessary|Something you must have or do. You cannot do without it.
+unnecessary|Not needed. You could do without it.
+embarrass|To make someone feel shy, silly or ashamed in front of others.
+accommodate|To have enough room for someone or something. Also, to help by giving what is needed.
+occasion|A special time or event, like a birthday or a concert.
+address|The place where you live. It tells people where to find your house.
+disappear|To go away so that you cannot be seen any more.
+disappoint|To make someone sad because you did not do what they hoped.
+possession|Something that belongs to you.
+recommend|To tell someone that something is good and they should try it.
+committee|A small group of people chosen to plan or decide something.
+millionaire|A very rich person who has a million dollars or more.
+success|When you do what you wanted to do, or do it well.
+successful|Doing well and getting what you aimed for.
+beginning|The start of something.
+occurred|Happened. It is the past of "occur".
+travelled|Went from one place to another, often far away.
+cancelled|Stopped from happening. "The match was cancelled."
+opportunity|A chance to do something good.
+aggressive|Ready to fight or attack. Not friendly.
+exaggerate|To say something is bigger, better or worse than it really is.
+collapse|To fall down suddenly. Also, to fall because you are very weak.
+commotion|A lot of noisy excitement.
+appreciate|To be thankful for something. Also, to see how good something is.
+assistance|Help.
+accident|Something bad that happens by mistake, when nobody meant it.
+accurate|Exactly right, with no mistakes.
+approach|To come closer to something.
+suggestion|An idea that you offer to someone.
+harass|To keep bothering or troubling someone again and again.
+apparently|It seems so, from what people say or what you can see.
+occurrence|Something that happens. An event.
+rhythm|A beat that repeats in music or dance.
+conscience|The voice inside you that tells you what is right and wrong.
+conscious|Awake and knowing what is around you. Also, aware of something.
+knowledge|All the things that you know and have learnt.
+knuckle|A joint in your finger, where it bends.
+wrinkle|A small fold or line in cloth or skin.
+wrestle|To fight by holding and pushing someone to the ground, usually as a sport.
+scissors|A tool with two blades for cutting paper or cloth.
+muscle|A part of your body that makes you move. It gets stronger when you exercise.
+guarantee|A promise that something will work well, or that it will be fixed if not.
+guardian|A person who looks after a child, like a parent.
+honest|Telling the truth. Not lying or cheating.
+honour|Something that makes you feel proud. Also, respect for someone good.
+thumb|The short, fat finger at the side of your hand.
+plumber|A person who fixes water pipes and taps.
+solemn|Serious and quiet, not joking.
+column|A line of numbers or words going down the page. Also, a tall post that holds up a building.
+autumn|The season between summer and winter when leaves fall. Singapore does not really have it.
+doubt|Not feeling sure about something.
+debt|Money that you owe to someone and must pay back.
+receipt|A small paper that shows you paid for something.
+foreign|From another country.
+whistle|A high sound made by blowing through your lips or a small tool.
+glisten|To shine and sparkle, like something wet in the sun.
+design|To plan how something will look or work. Also, the plan itself.
+campaign|A plan with many actions to get something done, like saving water.
+receive|To get something that is given or sent to you.
+ceiling|The top part of a room, above your head.
+deceive|To trick someone so they believe something that is not true.
+conceited|Thinking too much of yourself and showing off.
+achieve|To do something good, after trying hard.
+thief|A person who steals things.
+fierce|Strong, wild and a little scary.
+niece|The daughter of your brother or sister.
+piece|One part of something bigger, like a piece of cake.
+shriek|A loud, high scream.
+siege|When an army surrounds a place for a long time to try to get in.
+grief|A deep sadness, often when someone has died.
+mischief|Playing naughty tricks that cause trouble but are not very bad.
+mischievous|Fond of playing naughty tricks.
+weird|Very strange and odd.
+seize|To grab something suddenly and hold it tight.
+neighbour|Someone who lives next door or close to you.
+weigh|To find out how heavy something is. Also, to be a certain heaviness.
+height|How tall something is, from bottom to top.
+leisure|Free time when you can do what you like.
+responsible|In charge of something. Also, sensible and can be trusted.
+sensible|Showing good thinking. Not silly.
+terrible|Very bad.
+horrible|Very unpleasant. Making you feel bad or scared.
+possible|Able to happen or be done.
+visible|Able to be seen.
+invisible|Not able to be seen.
+flexible|Able to bend easily without breaking.
+edible|Safe to eat.
+incredible|So good or so big that it is hard to believe.
+irresistible|So nice that you cannot say no to it.
+comfortable|Nice to be in. Soft and easy, not painful.
+valuable|Worth a lot of money, or very useful.
+reliable|Can be trusted to do what is promised.
+available|Free to use or get. Ready for you.
+remarkable|Special and worth noticing.
+noticeable|Easy to see or notice.
+knowledgeable|Knowing a lot about something.
+miserable|Very unhappy.
+considerable|Quite large. A lot.
+truly|Really and honestly.
+argument|When people talk angrily because they disagree.
+argued|Spoke angrily because you did not agree. It is the past of "argue".
+definitely|For sure. Without any doubt.
+separately|Apart from each other. Not together.
+completely|All the way. Totally.
+sincerely|Truly meaning what you say.
+extremely|Very, very much.
+happiness|The feeling of being happy.
+merciful|Kind to people you could punish.
+plentiful|More than enough. Lots of it.
+carefully|Slowly and with great attention so nothing goes wrong.
+accidentally|By mistake. Not on purpose.
+finally|At last, after waiting a long time.
+usually|Most of the time.
+especially|More than the others. Very much.
+gradually|Little by little, slowly.
+unfortunately|Sadly. It is bad luck that...
+desperately|In a way that shows you need something very badly.
+ninth|Number nine in a line.
+awful|Very bad or unpleasant.
+hoping|Wishing for something to happen.
+writing|Putting words on paper with a pen or pencil. Also, the words you have written.
+written|Put down in words on paper. It comes from "write".
+forgetting|Not remembering something.
+admitted|Said that something was true, even though you did not want to.
+controlled|Made something do what you wanted. Stayed in charge of it.
+regretted|Felt sorry about something you did.
+shining|Giving out light, or looking bright.
+decision|A choice that you make after thinking.
+permission|When someone says yes, you may do it.
+explosion|A sudden, very loud bang when something bursts.
+confusion|When you cannot think clearly or do not understand.
+admission|Being allowed to go in. Also, the money you pay to go in.
+discussion|Talking about something with other people.
+attention|Looking and listening carefully.
+invitation|A request asking someone to come to a party or event.
+competition|A game or contest where people try to win.
+pollution|Dirt in the air, water or land that harms living things.
+electrician|A person whose job is to fix and put in electric wires.
+musician|A person who plays or sings music.
+magician|A person who does magic tricks.
+politician|A person who works in government and helps make rules for the country.
+suspicion|A feeling that something is wrong, or that someone has done something bad.
+collision|When two things crash into each other.
+persuasion|Talking to someone to get them to agree.
+separate|To keep apart or pull apart. Also, not joined to others.
+desperate|Needing something badly and willing to try anything.
+temperature|How hot or cold something is.
+environment|The world around us, such as the land, air, water, plants and animals.
+government|The people who run a country and make its rules.
+library|A place with lots of books you can read or borrow.
+interesting|Making you want to know more. Not boring.
+vegetable|A plant that we eat, like a carrot or spinach.
+chocolate|A sweet brown food made from cocoa beans.
+behaviour|The way you act.
+category|A group of things that are alike.
+privilege|A special chance that not everyone gets, which you should be grateful for.
+definite|Clear and sure. Not just a guess.
+mathematics|The study of numbers and shapes. We also call it maths.
+restaurant|A place where you pay to sit and eat meals.
+dinosaur|A giant animal that lived on Earth millions of years ago.
+calendar|A chart that shows all the days, weeks and months of the year.
+grammar|The rules for how we put words together to make sentences.
+familiar|Something that you know well, or have seen before.
+similar|Nearly the same, but not exactly.
+particular|One special thing, not just any one.
+ordinary|Usual and not special.
+frightened|Scared.
+mysterious|Strange and hard to explain. A bit of a secret.
+curious|Wanting to find out or learn about something.
+generous|Happy to give and share with others.
+delicious|Tasting very good.
+anxious|Worried and a bit nervous.
+nervous|Feeling worried or afraid about something that is going to happen.
+courageous|Brave when things are scary or hard.
+dangerous|Might hurt you or cause harm.
+enormous|Very, very big.
+jealous|Unhappy because someone has something you want.
+awkward|Uncomfortable. Or hard to handle.
+business|A shop or company that sells things or services to make money.
+exercise|Moving your body to keep fit and healthy.
+experience|Something that you have done or lived through. Also, the things you learn from doing.
+excellent|Very good indeed.
+excitement|A happy feeling when something fun is going to happen.
+equipment|The tools or things you need for a job or a sport.
+pronunciation|The way that you say a word.
+sentence|A group of words that tells a complete idea. It starts with a capital letter and ends with a full stop.
+quarrel|An angry talk between people who disagree.
+cough|To push air out of your throat with a rough noise.
+straight|Not bending or curving. Going the direct way.
+through|In one side and out of the other.
+thorough|Careful and complete, with nothing left out.
+though|Even if. "It rained, though we still went out."
+naughty|Not behaving well.
+daughter|A girl or woman who is someone's child.
+laughter|The sound of people laughing.
+bought|Paid money to get something. It is the past of "buy".
+brought|Carried something with you to a place. It is the past of "bring".
+drought|A long time with no rain, so the land becomes very dry.
+queue|A line of people waiting for their turn.
+tongue|The soft part in your mouth that you use to taste and talk.
+biscuit|A small, flat, crisp, sweet cake.
+build|To make something by putting parts together.
+cousin|The child of your uncle or aunt.
+`;
+const MEANINGS = Object.fromEntries(RAW_MEANINGS.trim().split("\n").map(l => { const i = l.indexOf("|"); return [l.slice(0, i).trim().toLowerCase(), l.slice(i + 1).trim()]; }));
+const meaningOf = w => MEANINGS[String(w).toLowerCase()] || "";
 const LEVELS = {
   p3:  { short: "P3–4", name: "Primary 3 and 4", sub: "Everyday tricky words, double and silent letters, adding -ed and -ing, plurals, days and numbers.",
          bankTitle: "Primary 3–4 word bank", goal: 5, bank: parseBank(RAW_BANK_P3),
@@ -718,6 +1045,7 @@ const ICON = {
   slow:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M10 3h4"/></svg>',
   close:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   bulb:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+  book:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 8h6"/></svg>',
   check:'<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
 };
 function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
@@ -912,7 +1240,7 @@ function renderPractice(){
     body = `
       <div class="screen" style="gap:6px;align-items:center;padding-top:16px"><span class="eyebrow">Look carefully</span><div class="lookword">${esc(it.w)}</div>
       ${canSpeak ? `<button class="btn ghost small" type="button" id="hear">${ICON.speaker} Hear it</button>` : ""}</div>
-      ${sentenceCard(it)}
+      ${meaningCard(it) || sentenceCard(it)}
       <p class="note" style="text-align:center">Say the letters in your head. When you're ready, cover it and write it from memory.</p>
       <div class="grow"></div>
       <button class="btn primary block" type="button" id="cover">Cover it and write</button>`;
@@ -940,6 +1268,7 @@ function renderPractice(){
       : "Spot on.";
     body = `
       <div class="result-ok" role="status"><span class="eyebrow" style="color:var(--blue)">Correct</span><span class="word">${esc(it.w)}</span><span>${msg}</span></div>
+      ${meaningCard(it)}
       ${it.t ? tipCard(it.t) : ""}
       <div class="grow"></div>
       <button class="btn primary block" type="button" id="next">Next word</button>`;
@@ -959,6 +1288,7 @@ function renderPractice(){
           <span class="eyebrow">Correct spelling</span><div class="correct">${corr}</div>
           ${canSpeak ? `<button class="btn ghost small" type="button" id="hear" style="align-self:flex-start">${ICON.speaker} Hear it</button>` : ""}
         </div>
+        ${meaningCard(it)}
         ${it.t ? tipCard(it.t) : ""}
         <div class="grow"></div>
         <button class="btn primary block" type="button" id="cover">Cover it and write it again</button>`;
@@ -978,6 +1308,7 @@ function renderPractice(){
     body = `
       <div class="result-ok" role="status"><span class="eyebrow" style="color:var(--blue)">Fixed it</span><span class="word">${esc(it.w)}</span>
       <span>${it.again ? "Good. It will come back tomorrow." : "Well done. It will come back at the end of this round, and again tomorrow."}</span></div>
+      ${meaningCard(it)}
       <div class="grow"></div>
       <button class="btn primary block" type="button" id="next">Next word</button>`;
   }
@@ -987,6 +1318,7 @@ function renderPractice(){
   $("#hear") && ($("#hear").onclick = () => say(it.w));
   $("#slow") && ($("#slow").onclick = () => say(it.w, 0.5));
   $("#sent") && ($("#sent").onclick = () => say(fullSentence(it), 0.85));
+  $("#hear-sent") && ($("#hear-sent").onclick = () => say(fullSentence(it), 0.85));
   $("#hint") && ($("#hint").onclick = () => { c.hint = true; renderPractice(); });
   $("#cover") && ($("#cover").onclick = () => { c.phase = c.phase === "look" ? "write" : "rewrite"; c.typed = ""; renderPractice(); });
   $("#peek") && ($("#peek").onclick = () => { c.phase = "wrong"; renderPractice(); });
@@ -1032,6 +1364,12 @@ document.addEventListener("keydown", e => {
   else if (e.key === " ") { if (onBtn) return; e.preventDefault(); press(" "); }
   else if (/^[a-zA-Z'\-]$/.test(e.key)) { e.preventDefault(); press(e.key.toLowerCase()); }
 });
+function meaningCard(it){
+  const m = meaningOf(it.w); if (!m) return "";
+  return `<div class="tip mean">${ICON.book}<div><div style="font-weight:800;font-size:15px">What it means</div><div>${esc(m)}</div>
+    ${it.s ? `<div class="eg">Example: “${esc(fullSentence(it))}”</div>` : ""}
+    ${canSpeak && it.s ? `<button class="btn ghost small" type="button" id="hear-sent">${ICON.speaker} Hear the sentence</button>` : ""}</div></div>`;
+}
 function tipCard(t){ return `<div class="tip">${ICON.bulb}<div><div style="font-weight:800;font-size:15px">Memory trick</div><div>${esc(t)}</div></div></div>`; }
 function check(){
   const c = P.cur, it = c.it, input = $("#spell-input"), ans = (c.typed || "").trim();
@@ -1077,14 +1415,16 @@ function listCard(l){
       <div class="meter"><span style="width:${total ? mastered/total*100 : 0}%"></span></div></summary>
     <div class="lbody">
       <label class="toggle"><input type="checkbox" data-toggle="${esc(id)}" ${on ? "checked" : ""}> Include in daily practice</label>
-      <div>${l.words.map(w => { const [s, cls] = statusOf(w.w); return `<div class="wordrow"><span>${esc(w.w)}</span><span class="status ${cls}">${s}</span></div>`; }).join("")}</div>
+      <div>${l.words.map(w => { const [s, cls] = statusOf(w.w), m = meaningOf(w.w);
+        if (!m) return `<div class="wordrow"><span>${esc(w.w)}</span><span class="status ${cls}">${s}</span></div>`;
+        return `<details class="wd"><summary><span>${esc(w.w)}</span><span class="status ${cls}">${s}</span></summary><div class="wmean"><span>${esc(m)}</span>${w.s ? `<span class="eg">“${esc(fullSentence(w))}”</span>` : ""}</div></details>`; }).join("")}</div>
       ${!l.builtin ? (pendingDelete === l.id
         ? `<div class="confirm" role="alert"><span>Delete “${esc(l.name)}”? Progress on these words is kept.</span><div class="row"><button class="btn small primary" type="button" data-del-yes="${esc(l.id)}">Delete list</button><button class="btn small ghost" type="button" data-del-no>Keep it</button></div></div>`
         : `<button class="btn small ghost" type="button" data-del="${esc(l.id)}" style="align-self:flex-start">Delete list</button>`) : ""}
     </div></details>`;
 }
 function renderWords(){
-  const open = new Set([...document.querySelectorAll("#words details[open]")].map(d => d.querySelector("[data-toggle]")?.dataset.toggle));
+  const open = new Set([...document.querySelectorAll("#words details.list[open]")].map(d => d.querySelector("[data-toggle]")?.dataset.toggle));
   const draftName = $("#list-name")?.value ?? "", draftWords = $("#list-words")?.value ?? "";
   const voiceOpts = voices.map(v => `<option value="${esc(v.name)}" ${S.voice === v.name ? "selected" : ""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("");
   $("#words").innerHTML = `
@@ -1119,7 +1459,7 @@ function renderWords(){
       <p class="note" style="margin:0">Progress is saved on this device only.</p>
     </div>
     ${backupCard()}`;
-  document.querySelectorAll("#words details").forEach(d => { if (open.has(d.querySelector("[data-toggle]")?.dataset.toggle)) d.open = true; });
+  document.querySelectorAll("#words details.list").forEach(d => { if (open.has(d.querySelector("[data-toggle]")?.dataset.toggle)) d.open = true; });
   $("#addlist").onsubmit = e => {
     e.preventDefault();
     const name = $("#list-name").value.trim() || "My list " + (S.custom.length + 1);

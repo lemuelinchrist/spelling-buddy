@@ -1,6 +1,6 @@
 /* Spelling Buddy service worker: keeps the whole app on the device so it opens offline.
    BUMP VERSION ON EVERY CHANGE to any file below — that is what tells phones to update. */
-const VERSION = "2026-11-14.3";
+const VERSION = "2026-11-14.4";
 const CACHE = "spellbuddy-" + VERSION;
 const ASSETS = [
   "./",
