@@ -6,7 +6,9 @@ No build step, no dependencies.
 
 ## Levels
 - Each device picks a level on first run (`S.level`: `p3` or `p56`), changeable in Words → Settings.
-  There are no profiles: one child per device.
+  By default there is one child per device. Words → Settings has an optional "Two profiles on this device"
+  toggle (off by default) for a shared phone: profile 1 is the original `spellbuddy.v1` key, profile 2 is
+  `spellbuddy.v1.p2`, and the toggle/names/active profile live in `spellbuddy.profiles`. Turning it off keeps both saved.
 - `LEVELS` holds each level's word bank, default daily goal and wording. Banks are `RAW_BANK_P3` and `RAW_BANK_P56`.
 - Saved data from before levels existed is treated as `p56`.
 - Copy is child-neutral (no "her"/"his"); child-facing screens address the child as "you".

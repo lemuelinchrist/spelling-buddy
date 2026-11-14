@@ -203,6 +203,9 @@ nav.tabs svg.i{width:22px;height:22px}
 .install.counting .timer>span{transform:scaleX(0);transition:transform linear var(--install-ms, 15s)}
 .install.paused .timer>span{transform:scaleX(1);transition:none}
 /* Level picker (first run on a new device) */
+.profiles{display:flex;gap:4px;background:var(--surface-2);border-radius:999px;padding:4px}
+.profiles button{flex:1;min-height:44px;border:none;border-radius:999px;background:transparent;font-weight:800;font-size:16px;color:var(--muted);cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profiles button[aria-pressed="true"]{background:var(--blue);color:var(--on-accent)}
 .setup{display:flex;flex-direction:column;gap:18px;padding-top:12px}
 .setup img{width:72px;height:72px;border-radius:18px}
 .levels{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
@@ -227,7 +230,7 @@ nav.tabs svg.i{width:22px;height:22px}
   .hero .big{font-size:56px}
   .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
   #home{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px 24px;align-items:start}
-  #home>.home-head{grid-column:1/-1}
+  #home>.home-head,#home>.profiles{grid-column:1/-1}
   .lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
   .levels{grid-template-columns:repeat(2,minmax(0,1fr))}
   .level .lv-sub{font-size:17px}
@@ -667,10 +670,38 @@ const KEY = "spellbuddy.v1";
 const INTERVALS = [1, 1, 3, 7, 14, 30]; // days until next review, by box
 const MASTERED_BOX = 4;
 function freshState(){ return { v:1, level:"", goal:10, mode:"listen", voice:"", off:{}, custom:[], cards:{}, log:{} }; }
-let S = freshState();
-// Saved data from before levels existed belongs to the P5–6 user, so it keeps that level.
-try { const raw = localStorage.getItem(KEY); if (raw) { S = Object.assign(freshState(), JSON.parse(raw)); if (!LEVELS[S.level]) S.level = "p56"; } } catch(e) {}
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+/* Profiles: off by default (one child per device). When switched on in Words → Settings,
+   the device holds two profiles. Profile 1 is the original KEY, so existing progress is untouched;
+   profile 2 lives under its own key. Turning profiles off keeps both saved. */
+const META_KEY = "spellbuddy.profiles";
+const DEFAULT_NAMES = ["Profile 1", "Profile 2"];
+const keyFor = n => n === 2 ? KEY + ".p2" : KEY;
+let meta = { two:false, active:1, names:[...DEFAULT_NAMES] };
+try { const m = JSON.parse(localStorage.getItem(META_KEY) || "null");
+  if (m && typeof m === "object") meta = { two: m.two === true, active: m.two === true && m.active === 2 ? 2 : 1,
+    names: [0,1].map(i => (Array.isArray(m.names) && typeof m.names[i] === "string" && m.names[i].trim()) ? m.names[i].trim().slice(0,14) : DEFAULT_NAMES[i]) };
+} catch(e) {}
+function saveMeta(){ try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch(e) {} }
+function loadState(){
+  let st = freshState();
+  // Saved data from before levels existed belongs to the P5–6 user, so it keeps that level.
+  try { const raw = localStorage.getItem(keyFor(meta.active)); if (raw) { st = Object.assign(freshState(), JSON.parse(raw)); if (!LEVELS[st.level]) st.level = "p56"; } } catch(e) {}
+  return st;
+}
+let S = loadState();
+function save(){ try { localStorage.setItem(keyFor(meta.active), JSON.stringify(S)); } catch(e) {} }
+const profileName = () => meta.names[meta.active - 1];
+function switchProfile(n){
+  if (n === meta.active || !meta.two) return;
+  save(); meta.active = n; saveMeta(); S = loadState();
+  bkShown = false; bkDraft = ""; confirmReset = false; pendingDelete = null;
+  show(S.level ? "home" : "setup");
+}
+function profileSwitcher(){
+  return meta.two ? `<div class="profiles" role="group" aria-label="Who is practising">${meta.names.map((nm, i) =>
+    `<button type="button" data-profile="${i+1}" aria-pressed="${meta.active === i+1}">${esc(nm)}</button>`).join("")}</div>` : "";
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-profile]"); if (b) switchProfile(+b.dataset.profile); });
 
 /* ---------- Helpers ---------- */
 const $ = s => document.querySelector(s);
@@ -800,8 +831,9 @@ $("#tabs").addEventListener("click", e => { const b = e.target.closest("button")
 /* ---------- Level picker (first run on a new device) ---------- */
 function renderSetup(){
   $("#setup").innerHTML = `<div class="setup">
+    ${profileSwitcher()}
     <img src="icons/icon-192.png" alt="">
-    <div class="screen" style="gap:6px"><h1>Who's practising on this device?</h1>
+    <div class="screen" style="gap:6px"><h1>${meta.two ? "Who's practising as " + esc(profileName()) + "?" : "Who's practising on this device?"}</h1>
       <p class="muted" style="margin:0">Pick a level to choose the starting words. You can change it later in Words, under Settings.</p></div>
     <div class="levels">${Object.entries(LEVELS).map(([id, L]) => `
       <button class="level" type="button" data-level="${id}"><span class="lv-tag">${L.short}</span><b>${L.name}</b><span class="lv-sub">${L.sub}</span></button>`).join("")}
@@ -842,6 +874,7 @@ function renderHome(){
       <div><div class="muted" style="font-weight:600;font-size:15px">${esc(dateStr)}</div><h1>Spelling Buddy</h1></div>
       <span class="pill streak">${ICON.flame}<span>${st} day${st===1?"":"s"}</span></span>
     </div>
+    ${profileSwitcher()}
     ${hero}
     <div class="screen home-side"><div class="card"><h2>This week</h2><div class="week">${days}</div></div>
     ${tricky.length ? `<div class="screen" style="gap:10px"><h2>Tricky words to beat</h2><div class="chips">${tricky.map(([key]) => `<span class="wchip">${esc(wordName(key))}</span>`).join("")}</div></div>` : `<p class="note" style="margin:0">Words that trip you up will show up here, so you know what to work on.</p>`}</div>`;
@@ -1069,6 +1102,9 @@ function renderWords(){
       <p class="note" style="margin:0">${level().intro}</p>
       <div class="lists">${bank().map(listCard).join("")}</div></div>
     <div class="card"><h2>Settings</h2>
+      <div class="field"><label class="toggle"><input type="checkbox" id="two" ${meta.two ? "checked" : ""}> Two profiles on this device</label>
+        <span class="note">For a shared phone or tablet. Each profile has its own level, streak and progress. School lists and the settings below belong to the profile you're in${meta.two ? " (" + esc(profileName()) + ")" : ""}. Turning this off hides the second profile but keeps its progress.</span></div>
+      ${meta.two ? `<div class="field"><label for="pname">Name of ${esc(profileName())}</label><input id="pname" class="txt" type="text" maxlength="14" autocomplete="off" value="${esc(profileName())}"></div>` : ""}
       <div class="field"><label for="level">Level</label><select id="level">${Object.entries(LEVELS).map(([id, L]) => `<option value="${id}" ${S.level===id?"selected":""}>${L.name}</option>`).join("")}</select>
         <span class="note">Changes the built-in word bank. School lists and progress stay.</span></div>
       <div class="field"><label for="goal">Words per day</label><select id="goal">${[5,10,15,20].map(n => `<option ${S.goal===n?"selected":""}>${n}</option>`).join("")}</select></div>
@@ -1106,6 +1142,13 @@ function renderWords(){
   document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { pendingDelete = b.dataset.del; renderWords(); });
   document.querySelectorAll("[data-del-no]").forEach(b => b.onclick = () => { pendingDelete = null; renderWords(); });
   document.querySelectorAll("[data-del-yes]").forEach(b => b.onclick = () => { S.custom = S.custom.filter(c => c.id !== b.dataset.delYes); pendingDelete = null; save(); renderWords(); toast("List deleted."); });
+  $("#two").onchange = e => {
+    meta.two = e.target.checked; save();
+    if (!meta.two && meta.active !== 1) { meta.active = 1; S = loadState(); }
+    saveMeta(); toast(meta.two ? "Two profiles are on. Switch on the Home screen." : "Back to one profile.");
+    show(S.level ? "home" : "setup");
+  };
+  $("#pname") && ($("#pname").onchange = e => { meta.names[meta.active - 1] = e.target.value.trim().slice(0,14) || DEFAULT_NAMES[meta.active - 1]; saveMeta(); renderWords(); });
   $("#goal").onchange = e => { S.goal = +e.target.value; save(); };
   $("#level").onchange = e => { S.level = e.target.value; save(); renderWords(); toast(`Now using the ${level().name} words.`); };
   $("#mode").onchange = e => { S.mode = e.target.value; save(); };
