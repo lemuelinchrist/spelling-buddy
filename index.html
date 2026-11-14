@@ -105,8 +105,19 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .blank{display:inline-block;min-width:88px;border-bottom:2.5px solid var(--fg);vertical-align:baseline;height:1em}
 .field{display:flex;flex-direction:column;gap:8px}
 .field label{font-weight:800;font-size:15px}
-.spell{height:64px;border-radius:16px;border:2.5px solid var(--line);background:var(--surface);padding:0 18px;font-family:var(--display);font-size:28px;letter-spacing:.05em;width:100%}
-.spell:focus{border-color:var(--blue);outline:none}
+.spell{min-height:64px;border-radius:16px;border:2.5px solid var(--blue);background:var(--surface);padding:6px 18px;font-family:var(--display);font-size:28px;letter-spacing:.05em;width:100%;display:flex;align-items:center;flex-wrap:wrap;word-break:break-all}
+.spell .ph{color:var(--muted);font-family:var(--body);font-size:16px;letter-spacing:0;font-weight:600;margin-left:6px}
+.caret{display:inline-block;width:2.5px;height:1.1em;background:var(--blue);margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.kb{display:flex;flex-direction:column;gap:7px;user-select:none;-webkit-user-select:none;touch-action:manipulation;margin-inline:-8px}
+.kb .kr{display:flex;gap:5px;justify-content:center}
+.kb .kr.mid{padding:0 4.5%}
+.kb button{flex:1 1 0;min-width:0;max-width:46px;height:54px;border:none;border-radius:10px;background:var(--surface);color:var(--fg);font-family:var(--display);font-size:23px;font-weight:500;box-shadow:0 2px 0 var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.kb button:active{background:var(--surface-2);transform:translateY(1px);box-shadow:none}
+.kb .wide{max-width:none;flex:1.6 1 0;background:var(--surface-2)}
+.kb .space{max-width:none;flex:3 1 0;font-family:var(--body);font-size:15px;font-weight:700;color:var(--muted)}
+.kb .go{max-width:none;flex:3 1 0;background:var(--orange);color:var(--on-accent);font-family:var(--body);font-size:17px;font-weight:800;box-shadow:none}
+.kb .go:active{background:var(--orange)}
 .shake{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .hint{font-weight:700;color:var(--orange-ink)}
@@ -226,12 +237,30 @@ nav.tabs svg.i{width:22px;height:22px}
   .play{width:150px;height:150px}
   .play svg{width:64px;height:64px}
   .sentence{font-size:20px;padding:20px 22px}
-  .spell{height:76px;font-size:34px}
+  .spell{min-height:76px;font-size:34px}
+  .kb{margin-inline:0;gap:9px}
+  .kb .kr{gap:8px}
+  .kb button{max-width:58px;height:62px;font-size:27px;border-radius:12px}
+  .kb .space{font-size:17px}
+  .kb .go{font-size:19px}
   .lookword{font-size:58px}
   .correct,.result-ok .word{font-size:44px}
   .tiles{font-size:28px;gap:6px}
   .tile{min-width:36px;height:50px}
   .tip{font-size:18px}
+}
+/* Short screens (tablet or phone held sideways): tighten the top so the keyboard fits */
+@media (max-height:820px){
+  .app.full .screen{gap:12px}
+  .app.full .speak{gap:10px;padding-top:0}
+  .app.full .play{width:88px;height:88px}
+  .app.full .play svg{width:40px;height:40px}
+  .app.full .sentence{padding:10px 14px;font-size:16px}
+}
+@media (max-height:600px){
+  .kb button{height:46px}
+  .app.full .play{width:64px;height:64px}
+  .app.full .play svg{width:30px;height:30px}
 }
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -861,16 +890,14 @@ function renderPractice(){
           ${it.s ? `<button class="btn ghost small" type="button" id="sent">Use in a sentence</button>` : ""}
         </div></div>` : `<div class="speak"><span class="eyebrow">Write it from memory</span></div>`}
       ${sentenceCard(it)}
-      <form class="field" id="f" autocomplete="off">
-        <label for="spell-input">Type the word</label>
-        <input id="spell-input" class="spell" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
-        ${c.hint ? `<span class="hint">It starts with “${esc(it.w.slice(0,2))}…”</span>` : `<span class="note">Spell-check and autocorrect are switched off here.</span>`}
-      </form>
+      <div class="field">
+        <span class="eyebrow" id="spell-label">Type the word</span>
+        ${spellBox()}
+        ${c.hint ? `<span class="hint">It starts with “${esc(it.w.slice(0,2))}…”</span>` : ""}
+        ${c.phase === "ask" && !c.hint && !it.again ? `<button class="btn text small" type="button" id="hint" style="align-self:flex-start;padding:0">Show the first letters (hint)</button>` : ""}
+      </div>
       <div class="grow"></div>
-      <div class="screen" style="gap:6px">
-        <button class="btn primary block" type="submit" form="f">Check my spelling</button>
-        ${c.phase === "ask" && !c.hint && !it.again ? `<button class="btn text block" type="button" id="hint">Show the first letters (hint)</button>` : ""}
-      </div>`;
+      ${keyboard("Check")}`;
   } else if (c.phase === "right") {
     const msg = it.again ? "You got it this time. It will come back tomorrow to make sure it sticks."
       : c.hint ? "Correct, with a hint. We'll practise it again tomorrow."
@@ -904,15 +931,13 @@ function renderPractice(){
       body = `
         <div><h1 style="font-size:28px">Now from memory</h1><p class="muted" style="margin:4px 0 0">The word is covered. Write it the right way.</p></div>
         ${it.t ? tipCard(it.t) : ""}
-        <form class="field" id="f" autocomplete="off">
-          <label for="spell-input">Write it again</label>
-          <input id="spell-input" class="spell" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
-        </form>
+        <div class="field">
+          <span class="eyebrow" id="spell-label">Write it again</span>
+          ${spellBox()}
+          <button class="btn text small" type="button" id="peek" style="align-self:flex-start;padding:0">Peek at it again</button>
+        </div>
         <div class="grow"></div>
-        <div class="screen" style="gap:6px">
-          <button class="btn primary block" type="submit" form="f">Check</button>
-          <button class="btn text block" type="button" id="peek">Peek at it again</button>
-        </div>`;
+        ${keyboard("Check")}`;
     }
   } else if (c.phase === "fixed") {
     body = `
@@ -928,15 +953,53 @@ function renderPractice(){
   $("#slow") && ($("#slow").onclick = () => say(it.w, 0.5));
   $("#sent") && ($("#sent").onclick = () => say(fullSentence(it), 0.85));
   $("#hint") && ($("#hint").onclick = () => { c.hint = true; renderPractice(); });
-  $("#cover") && ($("#cover").onclick = () => { c.phase = c.phase === "look" ? "write" : "rewrite"; renderPractice(); });
+  $("#cover") && ($("#cover").onclick = () => { c.phase = c.phase === "look" ? "write" : "rewrite"; c.typed = ""; renderPractice(); });
   $("#peek") && ($("#peek").onclick = () => { c.phase = "wrong"; renderPractice(); });
   $("#next") && ($("#next").onclick = () => nextWord(false));
-  const f = $("#f"); if (f) { f.onsubmit = e => { e.preventDefault(); check(); }; setTimeout(() => $("#spell-input")?.focus(), 50); }
+  const kb = $("#kb"); if (kb) kb.onclick = e => { const b = e.target.closest("button[data-k]"); if (b) press(b.dataset.k); };
   $("#next")?.focus();
 }
+/* ---------- Built-in keyboard ----------
+   The answer box is not a real text field, so the phone's own keyboard
+   (and its word suggestions) never opens during practice. */
+const KB_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+const TYPING = ["ask", "write", "rewrite"];
+function spellInner(){
+  const t = (P && P.cur && P.cur.typed) || "";
+  return t ? esc(t) + '<span class="caret"></span>' : '<span class="caret"></span><span class="ph">Tap the letters below</span>';
+}
+function spellBox(){ return `<div id="spell-input" class="spell" role="textbox" aria-readonly="true" aria-labelledby="spell-label" aria-live="polite">${spellInner()}</div>`; }
+function updateSpell(){ const el = $("#spell-input"); if (el) el.innerHTML = spellInner(); }
+function keyboard(label){
+  const key = ch => `<button type="button" data-k="${ch}">${ch}</button>`;
+  return `<div class="kb" id="kb" role="group" aria-label="Letter keys">
+    <div class="kr">${[...KB_ROWS[0]].map(key).join("")}</div>
+    <div class="kr mid">${[...KB_ROWS[1]].map(key).join("")}</div>
+    <div class="kr">${[...KB_ROWS[2]].map(key).join("")}<button type="button" class="wide" data-k="back" aria-label="Delete last letter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:24px;height:24px"><path d="M9 6h11v12H9l-6-6z"/><path d="M12 10l4 4M16 10l-4 4"/></svg></button></div>
+    <div class="kr"><button type="button" class="wide" data-k="-" aria-label="Hyphen">-</button><button type="button" class="wide" data-k="'" aria-label="Apostrophe">'</button><button type="button" class="space" data-k=" " aria-label="Space">space</button><button type="button" class="go" data-k="enter">${label}</button></div>
+  </div>`;
+}
+function press(key){
+  const c = P && P.cur; if (!c || !TYPING.includes(c.phase)) return;
+  if (key === "enter") return check();
+  const t = c.typed || "";
+  if (key === "back") c.typed = t.slice(0, -1);
+  else if (t.length < 30) c.typed = t + key;
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch(e) {}
+  updateSpell();
+}
+// A physical keyboard (laptop or tablet) still works.
+document.addEventListener("keydown", e => {
+  if (!P || !P.cur || $("#practice").hidden || !TYPING.includes(P.cur.phase) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const onBtn = document.activeElement && document.activeElement.tagName === "BUTTON";
+  if (e.key === "Backspace") { e.preventDefault(); press("back"); }
+  else if (e.key === "Enter") { if (onBtn) return; e.preventDefault(); press("enter"); }
+  else if (e.key === " ") { if (onBtn) return; e.preventDefault(); press(" "); }
+  else if (/^[a-zA-Z'\-]$/.test(e.key)) { e.preventDefault(); press(e.key.toLowerCase()); }
+});
 function tipCard(t){ return `<div class="tip">${ICON.bulb}<div><div style="font-weight:800;font-size:15px">Memory trick</div><div>${esc(t)}</div></div></div>`; }
 function check(){
-  const c = P.cur, it = c.it, input = $("#spell-input"), ans = input.value.trim();
+  const c = P.cur, it = c.it, input = $("#spell-input"), ans = (c.typed || "").trim();
   if (!ans) { input.classList.remove("shake"); void input.offsetWidth; input.classList.add("shake"); return; }
   const norm = x => x.trim().replace(/\s+/g, " ").toLowerCase();
   const ok = norm(ans) === norm(it.w);
